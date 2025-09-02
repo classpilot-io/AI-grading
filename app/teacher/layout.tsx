@@ -1,0 +1,163 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  GraduationCap,
+  BookOpen,
+  BarChart3,
+  Settings,
+  Menu,
+  X,
+  User,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+const navigation = [
+  { name: "Assignments", href: "/teacher/assignments", icon: BookOpen },
+  { name: "Analytics", href: "/teacher/analytics", icon: BarChart3 },
+  { name: "Settings", href: "/teacher/settings", icon: Settings },
+];
+
+export default function TeacherLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const pathname = usePathname();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Mobile sidebar */}
+      <div
+        className={cn(
+          "fixed inset-0 z-50 lg:hidden",
+          sidebarOpen ? "block" : "hidden"
+        )}
+      >
+        <div
+          className="fixed inset-0 bg-gray-600/75"
+          onClick={() => setSidebarOpen(false)}
+        />
+        <div className="fixed inset-y-0 left-0 w-64 bg-white shadow-xl">
+          <div className="flex h-16 items-center justify-between px-4">
+            <Link
+              href="/"
+              className="flex items-center space-x-2 cursor-pointer"
+            >
+              <GraduationCap className="h-8 w-8 text-blue-600" />
+              <span className="text-sm sm:text-xl font-bold text-gray-900">
+                AI-Auto Marker
+              </span>
+            </Link>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+          <nav className="mt-8 px-4">
+            <ul className="space-y-2">
+              {navigation.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <li key={item.name}>
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        "group flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                        pathname === item.href
+                          ? "bg-blue-50 text-blue-700"
+                          : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                      )}
+                      onClick={() => setSidebarOpen(false)}
+                    >
+                      <Icon className="h-5 w-5" />
+                      <span>{item.name}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+        </div>
+      </div>
+
+      {/* Desktop sidebar */}
+      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
+        <div className="flex min-h-0 flex-1 flex-col bg-white shadow-lg">
+          <div className="flex h-16 items-center px-4">
+            <Link
+              href="/"
+              className="flex items-center space-x-2 cursor-pointer"
+            >
+              <GraduationCap className="h-8 w-8 text-blue-600" />
+              <span className="text-sm sm:text-xl font-bold text-gray-900">
+                AI-Auto Marker
+              </span>
+            </Link>
+          </div>
+          <nav className="mt-8 flex-1 px-4 pb-4">
+            <ul className="space-y-2">
+              {navigation.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <li key={item.name}>
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        "group flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                        pathname === item.href
+                          ? "bg-blue-50 text-blue-700"
+                          : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                      )}
+                    >
+                      <Icon className="h-5 w-5" />
+                      <span>{item.name}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="lg:pl-64">
+        {/* Top bar */}
+        <div className="sticky top-0 z-40 flex h-16 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="lg:hidden"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          <div className="flex flex-1 justify-between">
+            <h1 className="text-sm sm:text-xl  font-semibold text-gray-900">
+              Teacher Dashboard
+            </h1>
+            <div className="flex items-center space-x-2">
+              <div className="text-sm text-gray-500">
+                Welcome back, Prof. Smith
+              </div>
+              <div className="h-8 w-8 flex items-center justify-center rounded-full border border-gray-300 bg-gray-100">
+                <User className="h-5 w-5 text-gray-600" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Page content */}
+        <main className="py-8">{children}</main>
+      </div>
+    </div>
+  );
+}
