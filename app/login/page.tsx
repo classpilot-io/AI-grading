@@ -22,12 +22,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
+import useUserStore from "@/store/userStore";
 
 export default function LoginPage() {
   const router = useRouter();
 
   const [formData, setFormData] = useState({
-    role: ROLE.STUDENT,
+    role: ROLE.TEACHER,
     email: "",
     password: "",
   });
@@ -46,7 +47,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
 
-    if (!formData.email || !formData.password) {
+    if (!formData.email || !formData.password || !formData.role) {
       setError("Please fill all fields.");
       return;
     }
@@ -64,11 +65,7 @@ export default function LoginPage() {
           sameSite: "lax",
           secure: true,
         });
-        Cookies.set(USER_ROLE_KEY, res.userRole, {
-          path: "/",
-          sameSite: "lax",
-          secure: true,
-        });
+        (useUserStore?.getState() as any)?.setUser(res?.user);
         router.push("/");
       } else {
         setError("Login failed. No access token returned.");

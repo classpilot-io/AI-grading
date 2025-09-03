@@ -14,6 +14,10 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import useUserStore from "@/store/userStore";
+import { AUTH_COOKIE } from "@/lib/constants";
+import Cookies from "js-cookie";
+import { toast } from "sonner";
 
 const navigation = [
   { name: "Assignments", href: "/teacher/assignments", icon: BookOpen },
@@ -27,7 +31,14 @@ export default function TeacherLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const user = useUserStore((state: any) => state.user);
+  console.log("TeacherLayout user:", user);
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const onShowInfo = (e: any) => {
+    e.preventDefault();
+    toast.info("Feature coming soon!");
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -61,12 +72,17 @@ export default function TeacherLayout({
               <X className="h-5 w-5" />
             </Button>
           </div>
-          <nav className="mt-8 px-4">
-            <ul className="space-y-2">
+          <nav className="mt-8 px-4 relative min-h-[88dvh]">
+            <ul className="space-y-2 ">
               {navigation.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <li key={item.name}>
+                  <li
+                    key={item.name}
+                    onClick={(e) => {
+                      onShowInfo(e);
+                    }}
+                  >
                     <Link
                       href={item.href}
                       className={cn(
@@ -76,6 +92,7 @@ export default function TeacherLayout({
                           : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                       )}
                       onClick={() => setSidebarOpen(false)}
+                      style={{ pointerEvents: "none" }}
                     >
                       <Icon className="h-5 w-5" />
                       <span>{item.name}</span>
@@ -84,6 +101,19 @@ export default function TeacherLayout({
                 );
               })}
             </ul>
+            <Link
+              href="/login"
+              className="mt-auto p-4 absolute bottom-0 w-full left-0"
+            >
+              <Button
+                className="bg-blue-600 text-white hover:bg-blue-800 px-4 w-full mb-2"
+                onClick={() => {
+                  Cookies.remove(AUTH_COOKIE, { path: "/" });
+                }}
+              >
+                Logout
+              </Button>
+            </Link>
           </nav>
         </div>
       </div>
@@ -107,7 +137,12 @@ export default function TeacherLayout({
               {navigation.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <li key={item.name}>
+                  <li
+                    key={item.name}
+                    onClick={(e) => {
+                      onShowInfo(e);
+                    }}
+                  >
                     <Link
                       href={item.href}
                       className={cn(
@@ -116,6 +151,7 @@ export default function TeacherLayout({
                           ? "bg-blue-50 text-blue-700"
                           : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                       )}
+                      style={{ pointerEvents: "none" }}
                     >
                       <Icon className="h-5 w-5" />
                       <span>{item.name}</span>
@@ -125,6 +161,16 @@ export default function TeacherLayout({
               })}
             </ul>
           </nav>
+          <Link href="/login" className="mt-auto p-4">
+            <Button
+              className="bg-blue-600 text-white hover:bg-blue-800 px-4 w-full mb-2"
+              onClick={() => {
+                Cookies.remove(AUTH_COOKIE, { path: "/" });
+              }}
+            >
+              Logout
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -146,7 +192,7 @@ export default function TeacherLayout({
             </h1>
             <div className="flex items-center space-x-2">
               <div className="text-sm text-gray-500">
-                Welcome back, Prof. Smith
+                Welcome back, {user?.name || "Teacher"}
               </div>
               <div className="h-8 w-8 flex items-center justify-center rounded-full border border-gray-300 bg-gray-100">
                 <User className="h-5 w-5 text-gray-600" />
