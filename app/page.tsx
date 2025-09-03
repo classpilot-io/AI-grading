@@ -19,6 +19,7 @@ import {
   Linkedin,
   Twitter,
   X,
+  ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -27,20 +28,22 @@ import { AUTH_COOKIE, USER_ROLE_KEY } from "@/lib/constants";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { ROLE } from "@/lib/helpers";
+import useUserStore from "@/store/userStore";
 
 export default function Home() {
   const router = useRouter();
+  const user = useUserStore((state: any) => state.user);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [role, setRole] = useState("");
+  const [role, setRole] = useState<string>(ROLE.TEACHER);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
     const token = Cookies.get(AUTH_COOKIE);
-    const userRole = Cookies.get(USER_ROLE_KEY);
-    setRole(userRole || "");
+    console.log("User from store:", user);
+    setRole(user?.role || "");
     setIsLoggedIn(!!token);
     setCheckingAuth(false);
-  }, []);
+  }, [user]);
 
   const onClickPortal = (isTeacher: boolean) => {
     if (!isLoggedIn) {
@@ -125,20 +128,41 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row gap-4">
                 {checkingAuth ? (
                   <div className="h-8 w-24 bg-black/30 rounded animate-pulse"></div>
+                ) : !isLoggedIn ? (
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <Button
+                      onClick={() => onClickPortal(true)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 text-lg flex items-center"
+                    >
+                      Teacher Portal
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+
+                    <Button
+                      onClick={() => onClickPortal(false)}
+                      variant="outline"
+                      className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-6 py-3 text-lg flex items-center"
+                    >
+                      Student Portal
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                  </div>
                 ) : role == ROLE.TEACHER ? (
                   <Button
                     onClick={() => onClickPortal(true)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 text-lg"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 text-lg flex items-center"
                   >
                     Teacher Portal
+                    <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 ) : (
                   <Button
                     onClick={() => onClickPortal(false)}
                     variant="outline"
-                    className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-6 py-3 text-lg"
+                    className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-6 py-3 text-lg flex items-center"
                   >
                     Student Portal
+                    <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 )}
               </div>
@@ -287,21 +311,27 @@ export default function Home() {
                   Contact Us
                 </Link>
               </li>
+
               <li>
-                <Link
-                  href="/teacher/assignments"
-                  className="hover:text-white transition-colors"
-                >
-                  Teacher Portal
-                </Link>
+                {role == ROLE.TEACHER && (
+                  <Link
+                    href="/teacher/assignments"
+                    className="hover:text-white transition-colors flex items-center"
+                  >
+                    Teacher Portal
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
+                )}
               </li>
               <li>
-                <Link
-                  href="/student/demo"
-                  className="hover:text-white transition-colors"
-                >
-                  Student Portal
-                </Link>
+                {role == ROLE.STUDENT && (
+                  <Link
+                    href="/student/demo"
+                    className="hover:text-white transition-colors"
+                  >
+                    Student Portal
+                  </Link>
+                )}
               </li>
             </ul>
           </div>

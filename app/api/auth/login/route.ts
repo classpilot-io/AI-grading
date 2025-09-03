@@ -6,8 +6,8 @@ import { prisma } from '@/lib/prisma';
 
 export async function POST(req: Request) {
     try {
-        const { email, password } = await req.json();
-        if (!email || !password) return generateErrorResponse("Email and password are required", HTTP_STATUS_CODES.HTTP_BAD_REQUEST);
+        const { email, password, role } = await req.json();
+        if (!email || !password || !role) return generateErrorResponse("Email and password are required", HTTP_STATUS_CODES.HTTP_BAD_REQUEST);
 
         const supabase = await createServerSupabaseClient();
 
@@ -28,11 +28,19 @@ export async function POST(req: Request) {
         if (!dbUser) {
             return generateErrorResponse("User not found in app database", HTTP_STATUS_CODES.HTTP_BAD_REQUEST);
         }
+        if (!dbUser.role || dbUser.role !== role) {
+            return generateErrorResponse("User role mismatch", HTTP_STATUS_CODES.HTTP_UNAUTHORIZED);
+        }
 
         return generateResultResponse(
             {
-                userRole: dbUser.role,
                 access_token: userData?.session?.access_token,
+                user: {
+                    role: dbUser.role,
+                    name: dbUser.name,
+                    email: dbUser.email,
+                    userId: dbUser.id,
+                }
                 // user: userData?.user
             });
 

@@ -1,6 +1,6 @@
 export const AUTH_COOKIE = "auth_token";
 export const USER_ROLE_KEY = "user_role";
-export const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
+export const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
 export const HTTP_STATUS_CODES = {
   HTTP_SUCCESS: 200,

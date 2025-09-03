@@ -25,7 +25,7 @@ export default function SignupPage() {
   const router = useRouter();
 
   const [formData, setFormData] = useState({
-    role: ROLE.STUDENT,
+    role: ROLE.TEACHER,
     name: "",
     email: "",
     password: "",
