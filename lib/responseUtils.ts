@@ -1,4 +1,3 @@
-// lib/responseUtils.ts
 import { NextResponse } from "next/server";
 import { HTTP_STATUS_CODES } from "./constants";
 
@@ -8,9 +7,6 @@ interface TypedResponse<T = any> {
   errors?: string[];
   result?: T;
 }
-
-// ❌ No NextApiResponse in App Router
-// ✅ Return NextResponse.json instead
 
 export function generateErrorResponse(
   errorMessage: string,

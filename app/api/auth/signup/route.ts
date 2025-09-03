@@ -1,6 +1,4 @@
-// app/api/auth/signup/route.ts
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { createServerSupabaseClient } from "@/services/supabase/server";
 import {
   generateErrorResponse,
@@ -19,7 +17,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // App Router Supabase client (no req/res needed)
     const supabase = createServerSupabaseClient();
 
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
@@ -36,16 +33,18 @@ export async function POST(req: Request) {
 
     const supabaseUser = signUpData.user;
 
-    // Create user in Prisma DB
-    await prisma.user.create({
-      data: {
+    const { data: user, error: userInsertError } = await supabase
+      .from("User")
+      .insert({
         id: supabaseUser.id,
         email,
         name,
         role,
         passwordHash: "", // Supabase handles password storage
-      },
-    });
+      })
+      .select()
+      .maybeSingle();
+      if (userInsertError) return generateErrorResponse(userInsertError.message, HTTP_STATUS_CODES.HTTP_INTERNAL_SERVER_ERROR);
 
     return generateResultResponse({ message: "Signup successful!" });
   } catch (err: any) {

@@ -1,4 +1,3 @@
-// services/supabase/server.ts
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 
@@ -17,14 +16,13 @@ export function createServerSupabaseClient() {
           }));
         },
         setAll(cookiesToSet) {
-          // 🔑 In App Router, we *mutate* cookies directly
           cookiesToSet.forEach(({ name, value, options }) => {
             const isAuthToken =
               name.includes("access_token") ||
               name.includes("refresh_token") ||
               name.includes("auth-token");
 
-            options.httpOnly = isAuthToken; // ✅ only set HttpOnly for tokens
+            options.httpOnly = isAuthToken;
             cookieStore.set({ name, value, ...options });
           });
         },
