@@ -27,7 +27,7 @@ export async function POST(req: Request) {
 
     const questionPaper = formData.get("questionPaper") as File | null;
     const answerKey = formData.get("answerKey") as File | null;
-
+console.log('levejjl', level);
     if (!subject || !name || !className || !level || !questionPaper) {
       return generateErrorResponse(
         "Required fields are missing",
@@ -86,7 +86,7 @@ export async function POST(req: Request) {
           description: description ?? "",
           questionPaperPath: questionPaperUrl,
           answerKeyPath: answerKeyUrl,
-          submissionLink: "",
+          submissionLink: assignmentId,
         })
         .select()
         .maybeSingle();
@@ -141,12 +141,12 @@ export async function PUT(req: Request) {
     const isNewAnswerKeyRaw = formData.get("isNewAnswerKey") as string;
     const isNewAnswerKey = isNewAnswerKeyRaw === "true";
 
-    if (!subject || !name || !className || !level || !questionPaper) {
-      return generateErrorResponse(
-        "Required fields are missing",
-        HTTP_STATUS_CODES.HTTP_BAD_REQUEST
-      );
-    }
+    // if (!subject || !name || !className || !level || !questionPaper) {
+    //   return generateErrorResponse(
+    //     "Required fields are missing",
+    //     HTTP_STATUS_CODES.HTTP_BAD_REQUEST
+    //   );
+    // }
 
     let questionPaperUrl: string | undefined;
     let answerKeyUrl: string | undefined;

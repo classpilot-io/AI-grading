@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,56 +19,82 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
-import { PostFetcher } from "@/lib/helpers";
+import { GetFetcher, PostFetcher } from "@/lib/helpers";
 import { toast } from "sonner";
+import { GET } from "@/app/api/assignment/get/route";
+import useUserStore from "@/store/userStore";
+import { get } from "node:http";
 
-// Mock data
-const mockAssignments = [
-  {
-    id: "1",
-    name: "Algebra Fundamentals Quiz",
-    className: "Grade 10A",
-    subject: "Mathematics",
-    description: "Basic algebra concepts and problem solving",
-    submissionCount: 12,
-    totalStudents: 15,
-    createdAt: "2024-01-15",
-    questionPaper: "algebra-quiz.pdf",
-    answerKey: "algebra-answers.pdf",
-  },
-  {
-    id: "2",
-    name: "Essay on Climate Change",
-    className: "Grade 9B",
-    subject: "English",
-    description: "Write a 500-word essay on climate change impacts",
-    submissionCount: 8,
-    totalStudents: 12,
-    createdAt: "2024-01-14",
-    questionPaper: null,
-    answerKey: "essay-rubric.pdf",
-  },
-  {
-    id: "3",
-    name: "Geometry Problem Set",
-    className: "Grade 11C",
-    subject: "Mathematics",
-    description: "Advanced geometry problems focusing on triangles and circles",
-    submissionCount: 20,
-    totalStudents: 22,
-    createdAt: "2024-01-13",
-    questionPaper: "geometry-problems.pdf",
-    answerKey: "geometry-solutions.pdf",
-  },
-];
+// // Mock data
+// const mockAssignments = [
+//   {
+//     id: "1",
+//     name: "Algebra Fundamentals Quiz",
+//     className: "Grade 10A",
+//     subject: "Mathematics",
+//     description: "Basic algebra concepts and problem solving",
+//     submissionCount: 12,
+//     totalStudents: 15,
+//     createdAt: "2024-01-15",
+//     questionPaper: "algebra-quiz.pdf",
+//     answerKey: "algebra-answers.pdf",
+//   },
+//   {
+//     id: "2",
+//     name: "Essay on Climate Change",
+//     className: "Grade 9B",
+//     subject: "English",
+//     description: "Write a 500-word essay on climate change impacts",
+//     submissionCount: 8,
+//     totalStudents: 12,
+//     createdAt: "2024-01-14",
+//     questionPaper: null,
+//     answerKey: "essay-rubric.pdf",
+//   },
+//   {
+//     id: "3",
+//     name: "Geometry Problem Set",
+//     className: "Grade 11C",
+//     subject: "Mathematics",
+//     description: "Advanced geometry problems focusing on triangles and circles",
+//     submissionCount: 20,
+//     totalStudents: 22,
+//     createdAt: "2024-01-13",
+//     questionPaper: "geometry-problems.pdf",
+//     answerKey: "geometry-solutions.pdf",
+//   },
+// ];
 
 export default function AssignmentsPage() {
-  const [assignments, setAssignments] = useState(mockAssignments);
+  const user = useUserStore((state: any) => state.user);
+  const [assignments, setAssignments] = useState<any>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState<any>(null);
   const [generatedUrl, setGeneratedUrl] = useState<string | undefined>(
     undefined
   );
+
+  const getAllAssignments = async () => {
+    try {
+      const res: any = await GetFetcher(
+        `/assignment/list?teacherId=${user?.userId}`
+      );
+
+      if (res?.assignments) {
+        setAssignments(res.assonSubmitignments);
+      } else {
+        toast.error("No assignments found.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to fetch assignments.");
+    }
+  };
+
+  useEffect(() => {
+    if (user?.userId) {
+      getAllAssignments();
+    }
+  }, [user?.userId]);
 
   const handleCreateAssignment = async (assignmentData: any) => {
     console.log("assignment data create: ", assignmentData);
@@ -77,7 +103,7 @@ export default function AssignmentsPage() {
       formData.append(key, value);
     });
 
-    const res: any = await PostFetcher("/assignment/create", formData, "POST");
+    const res: any = await PostFetcher("/assignment", formData, "POST");
     if (res?.hasError) {
       toast.error(
         res?.errors?.[0] || "Failed to create assignment. Please try again."
@@ -85,30 +111,23 @@ export default function AssignmentsPage() {
       return;
     }
     if (res?.assignment) {
-      setGeneratedUrl(res?.assignment?.submissionUrl);
+      setGeneratedUrl(res?.assignment?.submissionLink);
       setAssignments([res?.assignment, ...assignments]);
       toast.success("Assignment created successfully!");
     }
   };
 
   const handleEditAssignment = async (assignmentData: any) => {
-    setAssignments(
-      assignments.map((a) =>
-        a.id === editingAssignment.id ? { ...a, ...assignmentData } : a
-      )
-    );
-    setEditingAssignment(null);
-    setIsModalOpen(false);
     const updatedAssignment: any = assignments?.find(
-      (a) => a.id === editingAssignment.id
+      (a: any) => a.id === assignmentData.id
     );
     console.log("assignment data updated: ", updatedAssignment);
     const formData = new FormData();
-    Object.entries(updatedAssignment).forEach(([key, value]: any) => {
+    Object.entries(assignmentData).forEach(([key, value]: any) => {
       formData.append(key, value);
     });
 
-    const res: any = await PostFetcher("/assignment/update", formData, "POST");
+    const res: any = await PostFetcher("/assignment", formData, "PUT");
     if (res?.hasError) {
       toast.error(
         res?.errors?.[0] || "Failed to create assignment. Please try again."
@@ -116,13 +135,15 @@ export default function AssignmentsPage() {
       return;
     }
     if (res?.assignment) {
-      setGeneratedUrl(res?.assignment?.submissionUrl);
       setAssignments(
-        assignments.map((a) =>
+        assignments.map((a: any) =>
           a.id === editingAssignment.id ? { ...a, ...res?.assignment } : a
         )
       );
     }
+    setIsModalOpen(false);
+    setEditingAssignment(null);
+    setGeneratedUrl(undefined);
     toast.success("Assignment Updated successfully!");
   };
 
@@ -167,7 +188,7 @@ export default function AssignmentsPage() {
 
       {/* Assignments Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {assignments.map((assignment, index) => (
+        {assignments?.map((assignment: any, index: any) => (
           <Card
             key={assignment.id}
             className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border-0 bg-white/80 backdrop-blur-sm"
@@ -249,7 +270,7 @@ export default function AssignmentsPage() {
 
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center space-x-1 text-gray-500">
-                    <Users className="h-4 w-4" />
+                    {/* <Users className="h-4 w-4" />
                     <span
                       className={getProgressColor(
                         assignment.submissionCount,
@@ -258,7 +279,7 @@ export default function AssignmentsPage() {
                     >
                       {assignment.submissionCount}/{assignment.totalStudents}{" "}
                       submitted
-                    </span>
+                    </span> */}
                   </div>
                   <div className="flex items-center space-x-1 text-gray-500">
                     <Calendar className="h-4 w-4" />
@@ -326,6 +347,7 @@ export default function AssignmentsPage() {
         onClose={() => {
           setIsModalOpen(false);
           setEditingAssignment(null);
+          setGeneratedUrl(undefined);
         }}
         onSubmit={
           editingAssignment ? handleEditAssignment : handleCreateAssignment

@@ -38,7 +38,7 @@ export function AssignmentModal({
 }: AssignmentModalProps) {
   const [formData, setFormData] = useState({
     id: "",
-    subject: "Mathematics",
+    subject: "mathematics",
     name: "",
     className: "",
     level: "",
@@ -51,7 +51,7 @@ export function AssignmentModal({
     if (editingAssignment) {
       setFormData({
         id: editingAssignment.id,
-        subject: editingAssignment.subject,
+        subject: editingAssignment.subject?.toLocaleLowerCase(),
         name: editingAssignment.name,
         className: editingAssignment.className,
         level: editingAssignment.level || "",
@@ -61,7 +61,7 @@ export function AssignmentModal({
       });
     } else {
       setFormData({
-        subject: "Mathematics",
+        subject: "mathematics",
         name: "",
         className: "",
         level: "",
@@ -73,9 +73,10 @@ export function AssignmentModal({
   }, [editingAssignment, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
+    debugger;
     e.preventDefault();
 
-    if (!formData.questionPaper) {
+    if (!editingAssignment && !formData.questionPaper) {
       toast.error("Please upload a question paper before submitting");
       return;
     }
@@ -103,7 +104,9 @@ export function AssignmentModal({
   };
 
   const isFormValid =
-    formData.name.trim() !== "" && formData.questionPaper !== null;
+    formData.name.trim() !== "" && editingAssignment
+      ? true
+      : formData.questionPaper !== null;
 
   if (generatedUrl) {
     return (
@@ -151,7 +154,7 @@ export function AssignmentModal({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6 pt-4">
           <div className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="subject">Subject</Label>
@@ -165,8 +168,8 @@ export function AssignmentModal({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Mathematics">Mathematics</SelectItem>
-                  <SelectItem value="English">English</SelectItem>
+                  <SelectItem value="mathematics">Mathematics</SelectItem>
+                  <SelectItem value="english">English</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -230,7 +233,7 @@ export function AssignmentModal({
             {/* File Uploads */}
             <div className="space-y-4">
               <div className="grid gap-2">
-                <Label>Question Paper *</Label>
+                <Label>Question Paper {editingAssignment ? "" : "*"}</Label>
                 <div className="flex items-center space-x-2">
                   <Button
                     type="button"
@@ -267,7 +270,7 @@ export function AssignmentModal({
                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                   onChange={handleFileUpload("questionPaper")}
                   className="hidden"
-                  required
+                  required={!editingAssignment}
                 />
                 {formData.questionPaper && (
                   <div className="flex items-center space-x-2 text-sm text-gray-600">
