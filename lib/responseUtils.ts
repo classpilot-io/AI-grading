@@ -1,27 +1,40 @@
-import { NextApiResponse } from 'next';
-import { HTTP_STATUS_CODES } from './constants';
+// lib/responseUtils.ts
+import { NextResponse } from "next/server";
+import { HTTP_STATUS_CODES } from "./constants";
 
 interface TypedResponse<T = any> {
-    statusCode: number;
-    hasError: boolean;
-    errors?: string[];
-    result?: T;
+  statusCode: number;
+  hasError: boolean;
+  errors?: string[];
+  result?: T;
 }
 
-export function generateErrorResponse(res: NextApiResponse, errorMessage: string, errorCode = HTTP_STATUS_CODES.HTTP_INTERNAL_SERVER_ERROR, error?: Error): void {
-    const responseBody: TypedResponse = {
-        hasError: true,
-        statusCode: errorCode,
-        errors: [errorMessage]
-    };
-    return res.status(errorCode).send(responseBody);
+// ❌ No NextApiResponse in App Router
+// ✅ Return NextResponse.json instead
+
+export function generateErrorResponse(
+  errorMessage: string,
+  errorCode = HTTP_STATUS_CODES.HTTP_INTERNAL_SERVER_ERROR,
+  error?: Error
+) {
+  const responseBody: TypedResponse = {
+    hasError: true,
+    statusCode: errorCode,
+    errors: [errorMessage],
+  };
+
+  return NextResponse.json(responseBody, { status: errorCode });
 }
-export function generateResultResponse<T = any>(res: NextApiResponse, result: T): void {
-    const responseBody: TypedResponse<T> = {
-        statusCode: HTTP_STATUS_CODES.HTTP_SUCCESS,
-        hasError: false,
-        result: result,
-        errors: []
-    };
-    return res.status(HTTP_STATUS_CODES.HTTP_SUCCESS).send(responseBody);
+
+export function generateResultResponse<T = any>(result: T) {
+  const responseBody: TypedResponse<T> = {
+    statusCode: HTTP_STATUS_CODES.HTTP_SUCCESS,
+    hasError: false,
+    result,
+    errors: [],
+  };
+
+  return NextResponse.json(responseBody, {
+    status: HTTP_STATUS_CODES.HTTP_SUCCESS,
+  });
 }

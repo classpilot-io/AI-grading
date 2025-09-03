@@ -1,36 +1,34 @@
-import { createServerClient, serializeCookieHeader } from "@supabase/ssr";
-import type { NextApiRequest, NextApiResponse } from "next";
-// import { Database } from "./database.types";
+// services/supabase/server.ts
+import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
 
-export async function createServerSupabaseClient(
-    req: NextApiRequest,
-    res: NextApiResponse
-) {
-    return createServerClient<any>(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                getAll() {
-                    return Object.keys(req.cookies).map((name) => ({
-                        name,
-                        value: req.cookies[name] || "",
-                    }));
-                },
-                setAll(cookiesToSet) {
-                    res.setHeader(
-                        "Set-Cookie",
-                        cookiesToSet.map(({ name, value, options }) => {
-                            const isAuthToken =
-                                name.includes("access_token") ||
-                                name.includes("refresh_token") ||
-                                name.includes("auth-token");
-                            options.httpOnly = !isAuthToken;
-                            return serializeCookieHeader(name, value, options);
-                        })
-                    );
-                },
-            },
-        }
-    );
+export function createServerSupabaseClient() {
+  const cookieStore = cookies();
+
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll().map((cookie) => ({
+            name: cookie.name,
+            value: cookie.value,
+          }));
+        },
+        setAll(cookiesToSet) {
+          // 🔑 In App Router, we *mutate* cookies directly
+          cookiesToSet.forEach(({ name, value, options }) => {
+            const isAuthToken =
+              name.includes("access_token") ||
+              name.includes("refresh_token") ||
+              name.includes("auth-token");
+
+            options.httpOnly = isAuthToken; // ✅ only set HttpOnly for tokens
+            cookieStore.set({ name, value, ...options });
+          });
+        },
+      },
+    }
+  );
 }
