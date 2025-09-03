@@ -86,7 +86,7 @@ console.log('levejjl', level);
           description: description ?? "",
           questionPaperPath: questionPaperUrl,
           answerKeyPath: answerKeyUrl,
-          submissionLink: assignmentId,
+          submissionLink: `${process.env.BASE_URL}/submit/${assignmentId}`,
         })
         .select()
         .maybeSingle();

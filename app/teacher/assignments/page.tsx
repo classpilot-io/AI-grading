@@ -81,7 +81,7 @@ export default function AssignmentsPage() {
       );
 
       if (res?.assignments) {
-        setAssignments(res.assonSubmitignments);
+        setAssignments(res.assignments);
       } else {
         toast.error("No assignments found.");
       }
@@ -163,6 +163,10 @@ export default function AssignmentsPage() {
     e.preventDefault();
     toast.info("Feature coming soon!");
   };
+
+  if (!user?.userId) {
+    return <div className="px-4 sm:px-6 lg:px-8">Loading...</div>;
+  }
 
   return (
     <div className="px-4 sm:px-6 lg:px-8">
@@ -324,7 +328,7 @@ export default function AssignmentsPage() {
       </div>
 
       {/* Empty State */}
-      {assignments.length === 0 && (
+      {assignments?.length === 0 && (
         <div className="text-center py-12">
           <BookOpen className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-sm font-medium text-gray-900">

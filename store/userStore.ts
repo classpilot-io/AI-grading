@@ -9,7 +9,7 @@ const useUserStore = create(
             clearUser: () => set({ user: null }),
         }),
         {
-            name: 'user-storage', // key in localStorage
+            name: 'user-storage', 
         }
     )
 );

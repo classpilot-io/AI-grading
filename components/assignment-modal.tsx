@@ -73,7 +73,6 @@ export function AssignmentModal({
   }, [editingAssignment, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
-    debugger;
     e.preventDefault();
 
     if (!editingAssignment && !formData.questionPaper) {
