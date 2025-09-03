@@ -50,7 +50,7 @@ export default function TeacherLayout({
             >
               <GraduationCap className="h-8 w-8 text-blue-600" />
               <span className="text-sm sm:text-xl font-bold text-gray-900">
-                AI-Auto Marker
+                AskAndLearn
               </span>
             </Link>
             <Button
@@ -98,7 +98,7 @@ export default function TeacherLayout({
             >
               <GraduationCap className="h-8 w-8 text-blue-600" />
               <span className="text-sm sm:text-xl font-bold text-gray-900">
-                AI-Auto Marker
+                AskAndLearn
               </span>
             </Link>
           </div>

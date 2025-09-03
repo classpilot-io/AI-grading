@@ -1,0 +1,30 @@
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { AUTH_COOKIE } from "./lib/constants";
+
+export function middleware(req: NextRequest) {
+  const token = req.cookies.get(AUTH_COOKIE)?.value;
+  const { pathname } = req.nextUrl;
+
+  // Public routes (accessible without login)
+  const publicPaths = ["/", "/login", "/signup"];
+
+  if (publicPaths.includes(pathname)) {
+    if (token && (pathname === "/login" || pathname === "/signup")) {
+      return NextResponse.redirect(new URL("/", req.url));
+    }
+    return NextResponse.next();
+  }
+
+  if (!token) {
+    return NextResponse.redirect(new URL("/login", req.url));
+  }
+
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: [
+    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+  ],
+};

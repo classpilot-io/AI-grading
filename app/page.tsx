@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -22,60 +22,45 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import Cookies from "js-cookie";
+import { AUTH_COOKIE, USER_ROLE_KEY } from "@/lib/constants";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { ROLE } from "@/lib/helpers";
 
 export default function Home() {
+  const router = useRouter();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [role, setRole] = useState("");
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    const token = Cookies.get(AUTH_COOKIE);
+    const userRole = Cookies.get(USER_ROLE_KEY);
+    setRole(userRole || "");
+    setIsLoggedIn(!!token);
+    setCheckingAuth(false);
+  }, []);
+
+  const onClickPortal = (isTeacher: boolean) => {
+    if (!isLoggedIn) {
+      toast.error("Please login to access the portal");
+    } else {
+      if (isTeacher) router.push("/teacher/assignments");
+      else router.push("/student/demo");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      {/* Hero Section */}
-      {/* <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 via-indigo-600/20 to-purple-600/20"></div>
-        <div className="relative px-4 py-20 text-center">
-          <div className="mx-auto max-w-4xl">
-            <div className="mb-8 flex justify-center">
-              <div className="rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 p-4">
-                <GraduationCap className="h-12 w-12 text-white" />
-              </div>
-            </div>
-            <h1 className="mb-6 text-5xl font-bold tracking-tight text-gray-900">
-              AI-Auto Marker
-            
-            </h1>
-            <p className="mb-8 text-xl text-gray-600">
-              Streamline assignment creation, submission, and auto-grading with
-              AI-powered marking
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/teacher/assignments">
-                <Button
-                  size="lg"
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 text-lg"
-                >
-                  Teacher Portal
-                </Button>
-              </Link>
-              <Link href="/student/demo">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-3 text-lg"
-                >
-                  Student Portal
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div> */}
       <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
         {/* Header */}
         <header className="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 shadow-md">
-          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between transition-all duration-500 ease-in-out">
             {/* Logo */}
             <div className="flex items-center space-x-2">
               <GraduationCap className="h-6 w-6 text-white" />
-              <span className="text-lg font-bold text-white">
-                AI-Auto Marker
-              </span>
+              <span className="text-lg font-bold text-white">AskAndLearn</span>
             </div>
 
             {/* Nav */}
@@ -93,18 +78,31 @@ export default function Home() {
                 FAQ
               </Link>
             </nav>
-
-            {/* Auth Buttons */}
-            <div className="flex items-center space-x-4">
-              <Link href="/" className="text-white hover:text-gray-200">
-                Login
-              </Link>
-              <Link href="/">
-                <Button className="bg-white text-blue-600 hover:bg-gray-100 px-4">
-                  Sign Up
+            {checkingAuth ? (
+              <div className="h-6 w-20 bg-white/30 rounded animate-pulse"></div>
+            ) : isLoggedIn ? (
+              <Link href="/login">
+                <Button
+                  className="bg-white text-blue-600 hover:bg-gray-100 px-4"
+                  onClick={() => {
+                    Cookies.remove(AUTH_COOKIE, { path: "/" });
+                  }}
+                >
+                  Logout
                 </Button>
               </Link>
-            </div>
+            ) : (
+              <div className="flex items-center space-x-4">
+                <Link href="/login" className="text-white hover:text-gray-200">
+                  Login
+                </Link>
+                <Link href="/signup">
+                  <Button className="bg-white text-blue-600 hover:bg-gray-100 px-4">
+                    Sign Up
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
         </header>
 
@@ -125,19 +123,24 @@ export default function Home() {
                 AI grading with detailed feedback — all in one place.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/teacher/assignments">
-                  <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 text-lg">
+                {checkingAuth ? (
+                  <div className="h-8 w-24 bg-black/30 rounded animate-pulse"></div>
+                ) : role == ROLE.TEACHER ? (
+                  <Button
+                    onClick={() => onClickPortal(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 text-lg"
+                  >
                     Teacher Portal
                   </Button>
-                </Link>
-                <Link href="/student/demo">
+                ) : (
                   <Button
+                    onClick={() => onClickPortal(false)}
                     variant="outline"
                     className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-6 py-3 text-lg"
                   >
                     Student Portal
                   </Button>
-                </Link>
+                )}
               </div>
             </div>
 
@@ -251,9 +254,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12">
           {/* About Section */}
           <div>
-            <h3 className="text-xl font-bold text-white mb-4">
-              AI-Auto Marker
-            </h3>
+            <h3 className="text-xl font-bold text-white mb-4">AskAndLearn</h3>
             <p className="text-sm leading-relaxed max-w-sm">
               Empowering teachers and students with AI-powered assignment
               evaluation, smart grading, and enhanced learning tools for a
@@ -331,7 +332,7 @@ export default function Home() {
 
         {/* Bottom Section */}
         <div className="border-t border-gray-800 mt-10 pt-6 text-center text-sm text-gray-500">
-          &copy; {new Date().getFullYear()} AI-Auto Marker. All rights reserved.
+          &copy; {new Date().getFullYear()} AskAndLearn. All rights reserved.
         </div>
       </footer>
     </div>
