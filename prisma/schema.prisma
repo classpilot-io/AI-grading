@@ -1,0 +1,128 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+        
+// --------------------
+// Enums
+// --------------------
+enum UserRole {
+  student
+  teacher
+}
+
+enum SubjectType {
+  mathematics
+  english
+}
+
+enum SubmissionStatus {
+  pending
+  graded
+  failed
+}
+
+// --------------------
+// Models
+// --------------------
+
+model User {
+  id           String       @id @default(uuid())
+  role         UserRole
+  name         String
+  email        String       @unique
+  passwordHash String
+
+  assignments  Assignment[] @relation("TeacherAssignments")
+  submissions  Submission[] @relation("StudentSubmissions")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime?
+}
+
+model Assignment {
+  id             String       @id @default(uuid())
+  teacherId      String
+  teacher        User         @relation("TeacherAssignments", fields: [teacherId], references: [id])
+  subject        SubjectType
+  name           String
+  className      String
+  level          String
+  description    String?
+  questionPaperPath   String?      
+  answerKeyPath  String?      
+  submissionLink String       @unique
+
+  submissions    Submission[]
+  questions      Question[]
+  classSummaries ClassSummary[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime?
+
+  @@index([teacherId])
+}
+
+model Submission {
+  id                String     @id @default(uuid())
+  assignmentId      String
+  assignment        Assignment @relation(fields: [assignmentId], references: [id])
+  studentId         String?
+  student           User?      @relation("StudentSubmissions", fields: [studentId], references: [id])
+  studentIdentifier String     // e.g. email or roll number
+  submissionFilePath    String     
+  status            SubmissionStatus @default(pending)
+  scoreTotal        Float?
+  summary           String?
+  gradedAt          DateTime?
+
+  results   SubmissionResult[]
+  createdAt DateTime @default(now())
+
+  @@index([assignmentId])
+  @@index([studentId])
+}
+
+model Question {
+  id           String     @id @default(uuid())
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id])
+  results      SubmissionResult[]
+
+  createdAt DateTime @default(now())
+
+  @@index([assignmentId])
+}
+
+model SubmissionResult {
+  id            String     @id @default(uuid())
+  submissionId  String
+  submission    Submission @relation(fields: [submissionId], references: [id])
+  questionId    String
+  question      Question   @relation(fields: [questionId], references: [id])
+  scoreEarned   Float
+  scorePossible Float
+  rationale     String
+
+  createdAt DateTime @default(now())
+
+  @@index([submissionId])
+  @@index([questionId])
+}
+
+model ClassSummary {
+  id           String     @id @default(uuid())
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id])
+  metrics      Json
+
+  createdAt DateTime @default(now())
+
+  @@index([assignmentId])
+}

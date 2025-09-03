@@ -47,7 +47,7 @@ export default function StudentDemoPage() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">
-                  AI-Auto Marker
+                  AskAndLearn
                 </h1>
                 <p className="text-sm text-gray-500">Student Demo Portal</p>
               </div>

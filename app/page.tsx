@@ -37,7 +37,7 @@ export default function Home() {
               </div>
             </div>
             <h1 className="mb-6 text-5xl font-bold tracking-tight text-gray-900">
-              AI-Auto Marker
+              AskAndLearn
             
             </h1>
             <p className="mb-8 text-xl text-gray-600">
@@ -74,7 +74,7 @@ export default function Home() {
             <div className="flex items-center space-x-2">
               <GraduationCap className="h-6 w-6 text-white" />
               <span className="text-lg font-bold text-white">
-                AI-Auto Marker
+                AskAndLearn
               </span>
             </div>
 
@@ -96,10 +96,10 @@ export default function Home() {
 
             {/* Auth Buttons */}
             <div className="flex items-center space-x-4">
-              <Link href="/" className="text-white hover:text-gray-200">
+              <Link href="/login" className="text-white hover:text-gray-200">
                 Login
               </Link>
-              <Link href="/">
+              <Link href="/signup">
                 <Button className="bg-white text-blue-600 hover:bg-gray-100 px-4">
                   Sign Up
                 </Button>
@@ -252,7 +252,7 @@ export default function Home() {
           {/* About Section */}
           <div>
             <h3 className="text-xl font-bold text-white mb-4">
-              AI-Auto Marker
+              AskAndLearn
             </h3>
             <p className="text-sm leading-relaxed max-w-sm">
               Empowering teachers and students with AI-powered assignment
@@ -331,7 +331,7 @@ export default function Home() {
 
         {/* Bottom Section */}
         <div className="border-t border-gray-800 mt-10 pt-6 text-center text-sm text-gray-500">
-          &copy; {new Date().getFullYear()} AI-Auto Marker. All rights reserved.
+          &copy; {new Date().getFullYear()} AskAndLearn. All rights reserved.
         </div>
       </footer>
     </div>
