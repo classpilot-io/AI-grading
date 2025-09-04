@@ -80,6 +80,7 @@ export default function TeacherLayout({
                   <li
                     key={item.name}
                     onClick={(e) => {
+                      if (item?.name == "Assignments") return;
                       onShowInfo(e);
                     }}
                   >
@@ -92,7 +93,10 @@ export default function TeacherLayout({
                           : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                       )}
                       onClick={() => setSidebarOpen(false)}
-                      style={{ pointerEvents: "none" }}
+                      style={{
+                        pointerEvents:
+                          item?.name == "Assignments" ? "auto" : "none",
+                      }}
                     >
                       <Icon className="h-5 w-5" />
                       <span>{item.name}</span>
@@ -187,12 +191,12 @@ export default function TeacherLayout({
             <Menu className="h-5 w-5" />
           </Button>
           <div className="flex flex-1 justify-between">
-            <h1 className="text-sm sm:text-xl  font-semibold text-gray-900">
+            <h1 className="text-sm sm:text-xl  font-semibold text-gray-900 align-middle mt-[6px]" >
               Teacher Dashboard
             </h1>
             <div className="flex items-center space-x-2">
               <div className="text-sm text-gray-500">
-                Welcome back, {user?.name || "Teacher"}
+                {user?.name || "Teacher"}
               </div>
               <div className="h-8 w-8 flex items-center justify-center rounded-full border border-gray-300 bg-gray-100">
                 <User className="h-5 w-5 text-gray-600" />

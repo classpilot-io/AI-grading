@@ -27,6 +27,7 @@ interface AssignmentModalProps {
   onSubmit: (data: any) => void;
   editingAssignment?: any;
   generatedUrl?: string;
+  isLoading?: boolean;
 }
 
 export function AssignmentModal({
@@ -35,6 +36,7 @@ export function AssignmentModal({
   onSubmit,
   editingAssignment,
   generatedUrl,
+  isLoading,
 }: AssignmentModalProps) {
   const [formData, setFormData] = useState({
     id: "",
@@ -110,7 +112,7 @@ export function AssignmentModal({
   if (generatedUrl) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md mx-4 sm:mx-0">
           <div className="text-center py-8">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
               <Check className="h-8 w-8 text-emerald-600" />
@@ -240,13 +242,19 @@ export function AssignmentModal({
                     onClick={() =>
                       document.getElementById("questionPaper")?.click()
                     }
-                    className="flex-1"
+                    className="flex-1 flex items-center justify-start"
                   >
-                    <Upload className="h-4 w-4 mr-2" />
-                    {formData.questionPaper
-                      ? formData.questionPaper.name
-                      : "Upload Question Paper"}
+                    <Upload className="h-4 w-4 mr-2 flex-shrink-0" />
+                    <span
+                      className="truncate overflow-hidden text-ellipsis whitespace-nowrap max-w-[180px] sm:max-w-[250px]"
+                      title={formData.questionPaper?.name}
+                    >
+                      {formData.questionPaper
+                        ? formData.questionPaper.name
+                        : "Upload Question Paper"}
+                    </span>
                   </Button>
+
                   {formData.questionPaper && (
                     <Button
                       type="button"
@@ -272,9 +280,14 @@ export function AssignmentModal({
                   required={!editingAssignment}
                 />
                 {formData.questionPaper && (
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
-                    <FileText className="h-4 w-4" />
-                    <span>{formData.questionPaper.name}</span>
+                  <div className="flex items-center space-x-2 text-sm text-gray-600 max-w-full">
+                    <FileText className="h-4 w-4 flex-shrink-0" />
+                    <span
+                      className="truncate overflow-hidden text-ellipsis whitespace-nowrap max-w-[200px] sm:max-w-[300px]"
+                      title={formData.questionPaper.name}
+                    >
+                      {formData.questionPaper.name}
+                    </span>
                   </div>
                 )}
               </div>
@@ -283,18 +296,24 @@ export function AssignmentModal({
                 <Label>Answer Key (Optional)</Label>
                 <div className="flex items-center space-x-2">
                   <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() =>
-                      document.getElementById("answerKey")?.click()
-                    }
-                    className="flex-1"
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    {formData.answerKey
-                      ? formData.answerKey.name
-                      : "Upload Answer Key"}
-                  </Button>
+  type="button"
+  variant="outline"
+  onClick={() =>
+    document.getElementById("answerKey")?.click()
+  }
+  className="flex-1 flex items-center justify-start"
+>
+  <Upload className="h-4 w-4 mr-2 flex-shrink-0" />
+  <span
+    className="truncate overflow-hidden text-ellipsis whitespace-nowrap max-w-[180px] sm:max-w-[250px]"
+    title={formData.answerKey?.name}
+  >
+    {formData.answerKey
+      ? formData.answerKey.name
+      : "Upload Answer Key"}
+  </span>
+</Button>
+
                   {formData.answerKey && (
                     <Button
                       type="button"
@@ -316,9 +335,14 @@ export function AssignmentModal({
                   className="hidden"
                 />
                 {formData.answerKey && (
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
-                    <FileText className="h-4 w-4" />
-                    <span>{formData.answerKey.name}</span>
+                  <div className="flex items-center space-x-2 text-sm text-gray-600 max-w-full">
+                    <FileText className="h-4 w-4 flex-shrink-0" />
+                    <span
+                      className="truncate max-w-xs"
+                      title={formData.answerKey.name}
+                    >
+                      {formData.answerKey.name}
+                    </span>
                   </div>
                 )}
               </div>
@@ -328,10 +352,14 @@ export function AssignmentModal({
           <div className="flex space-x-3 pt-4">
             <Button
               type="submit"
-              disabled={!isFormValid}
+              disabled={!isFormValid || isLoading}
               className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50"
             >
-              {editingAssignment ? "Save Changes" : "Create Assignment"}
+              {isLoading
+                ? "Saving..."
+                : editingAssignment
+                ? "Save Changes"
+                : "Create Assignment"}
             </Button>
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel

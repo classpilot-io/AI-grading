@@ -39,13 +39,16 @@ export default function Home() {
 
   useEffect(() => {
     const token = Cookies.get(AUTH_COOKIE);
-    console.log("User from store:", user);
     setRole(user?.role || "");
     setIsLoggedIn(!!token);
     setCheckingAuth(false);
   }, [user]);
 
   const onClickPortal = (isTeacher: boolean) => {
+    if (!isTeacher) {
+      toast.info("Feature coming soon!");
+      return;
+    }
     if (!isLoggedIn) {
       toast.error("Please login to access the portal");
     } else {
@@ -296,18 +299,12 @@ export default function Home() {
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/about"
-                  className="hover:text-white transition-colors"
-                >
+                <Link href="/" className="hover:text-white transition-colors">
                   About Us
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/contact"
-                  className="hover:text-white transition-colors"
-                >
+                <Link href="/" className="hover:text-white transition-colors">
                   Contact Us
                 </Link>
               </li>
@@ -355,7 +352,7 @@ export default function Home() {
                 <Instagram className="h-6 w-6 hover:text-white transition-colors" />
               </Link>
             </div>
-            <p className="text-sm">📧 support@aiautomarker.com</p>
+            <p className="text-sm">📧 support@askandlearn.com</p>
             <p className="text-sm">📞 +1 (000) 000-000</p>
           </div>
         </div>
