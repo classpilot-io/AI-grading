@@ -66,7 +66,9 @@ export default function LoginPage() {
           secure: true,
         });
         (useUserStore?.getState() as any)?.setUser(res?.user);
-        router.push("/");
+        setTimeout(() => {
+          window.location.reload();
+        }, 100);
       } else {
         setError("Login failed. No access token returned.");
       }

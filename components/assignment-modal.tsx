@@ -296,23 +296,23 @@ export function AssignmentModal({
                 <Label>Answer Key (Optional)</Label>
                 <div className="flex items-center space-x-2">
                   <Button
-  type="button"
-  variant="outline"
-  onClick={() =>
-    document.getElementById("answerKey")?.click()
-  }
-  className="flex-1 flex items-center justify-start"
->
-  <Upload className="h-4 w-4 mr-2 flex-shrink-0" />
-  <span
-    className="truncate overflow-hidden text-ellipsis whitespace-nowrap max-w-[180px] sm:max-w-[250px]"
-    title={formData.answerKey?.name}
-  >
-    {formData.answerKey
-      ? formData.answerKey.name
-      : "Upload Answer Key"}
-  </span>
-</Button>
+                    type="button"
+                    variant="outline"
+                    onClick={() =>
+                      document.getElementById("answerKey")?.click()
+                    }
+                    className="flex-1 flex items-center justify-start"
+                  >
+                    <Upload className="h-4 w-4 mr-2 flex-shrink-0" />
+                    <span
+                      className="truncate overflow-hidden text-ellipsis whitespace-nowrap max-w-[180px] sm:max-w-[250px]"
+                      title={formData.answerKey?.name}
+                    >
+                      {formData.answerKey
+                        ? formData.answerKey.name
+                        : "Upload Answer Key"}
+                    </span>
+                  </Button>
 
                   {formData.answerKey && (
                     <Button
