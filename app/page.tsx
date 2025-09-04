@@ -87,17 +87,20 @@ export default function Home() {
             {checkingAuth ? (
               <div className="h-6 w-20 bg-white/30 rounded animate-pulse"></div>
             ) : isLoggedIn ? (
-              <Link href="/login">
-                <Button
-                  className="bg-white text-blue-600 hover:bg-gray-100 px-4"
-                  onClick={() => {
-                    Cookies.remove(AUTH_COOKIE, { path: "/" });
-                  }}
-                >
-                  Logout
-                </Button>
-              </Link>
+              // <Link href="/login">
+              <Button
+                className="bg-white text-blue-600 hover:bg-gray-100 px-4"
+                onClick={() => {
+                  Cookies.remove(AUTH_COOKIE, { path: "/" });
+                  setTimeout(() => {
+                    router.push("/login")
+                  }, 1000);
+                }}
+              >
+                Logout
+              </Button>
             ) : (
+              // </Link>
               <div className="flex items-center space-x-4">
                 <Link href="/login" className="text-white hover:text-gray-200">
                   Login
