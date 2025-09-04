@@ -73,6 +73,7 @@ export default function AssignmentsPage() {
   const [generatedUrl, setGeneratedUrl] = useState<string | undefined>(
     undefined
   );
+  const [isLoading, setIsLoading] = useState(false);
 
   const getAllAssignments = async () => {
     try {
@@ -97,7 +98,7 @@ export default function AssignmentsPage() {
   }, [user?.userId]);
 
   const handleCreateAssignment = async (assignmentData: any) => {
-    console.log("assignment data create: ", assignmentData);
+    setIsLoading(true);
     const formData = new FormData();
     Object.entries(assignmentData).forEach(([key, value]: any) => {
       formData.append(key, value);
@@ -115,9 +116,11 @@ export default function AssignmentsPage() {
       setAssignments([res?.assignment, ...assignments]);
       toast.success("Assignment created successfully!");
     }
+    setIsLoading(false);
   };
 
   const handleEditAssignment = async (assignmentData: any) => {
+    setIsLoading(true);
     const updatedAssignment: any = assignments?.find(
       (a: any) => a.id === assignmentData.id
     );
@@ -145,6 +148,7 @@ export default function AssignmentsPage() {
     setEditingAssignment(null);
     setGeneratedUrl(undefined);
     toast.success("Assignment Updated successfully!");
+    setIsLoading(false);
   };
 
   const openEditModal = (assignment: any) => {
@@ -358,6 +362,7 @@ export default function AssignmentsPage() {
         }
         editingAssignment={editingAssignment}
         generatedUrl={generatedUrl}
+        isLoading={isLoading}
       />
 
       <style jsx>{`

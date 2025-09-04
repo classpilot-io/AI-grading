@@ -112,45 +112,44 @@ export default function StudentSubmissionPage() {
   };
 
   if (isSubmitted) {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-blue-50 to-indigo-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md text-center bg-white/80 backdrop-blur-sm shadow-xl">
-        <CardContent className="pt-8">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
-            <CheckCircle className="h-8 w-8 text-emerald-600" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Submission Complete!
-          </h2>
-          <p className="text-gray-600 mb-6">
-            Your work has been uploaded successfully and will be graded
-            automatically.
-          </p>
-          <div className="space-y-3 text-sm text-gray-500">
-            <div className="flex items-center justify-center space-x-2">
-              <FileText className="h-4 w-4" />
-              <span>Solution submitted</span>
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-blue-50 to-indigo-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md text-center bg-white/80 backdrop-blur-sm shadow-xl">
+          <CardContent className="pt-8">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
+              <CheckCircle className="h-8 w-8 text-emerald-600" />
             </div>
-            <div className="flex items-center justify-center space-x-2">
-              <AlertCircle className="h-4 w-4" />
-              <span>Results will be available to your teacher</span>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Submission Complete!
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Your work has been uploaded successfully and will be graded
+              automatically.
+            </p>
+            <div className="space-y-3 text-sm text-gray-500">
+              <div className="flex items-center justify-center space-x-2">
+                <FileText className="h-4 w-4" />
+                <span>Solution submitted</span>
+              </div>
+              <div className="flex items-center justify-center space-x-2">
+                <AlertCircle className="h-4 w-4" />
+                <span>Results will be available to your teacher</span>
+              </div>
             </div>
-          </div>
 
-          {/* Added Home link */}
-          <div className="mt-8">
-            <Link href="/">
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6">
-                Go to Home
-              </Button>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
+            {/* Added Home link */}
+            <div className="mt-8">
+              <Link href="/">
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6">
+                  Go to Home
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -162,7 +161,9 @@ export default function StudentSubmissionPage() {
               <GraduationCap className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">AskAndLearn</h1>
+              <Link href={"/"}>
+                <h1 className="text-xl font-bold text-gray-900">AskAndLearn</h1>
+              </Link>
               <p className="text-sm text-gray-500">Student Submission Portal</p>
             </div>
           </div>
@@ -195,33 +196,47 @@ export default function StudentSubmissionPage() {
         <div className="grid gap-8 md:grid-cols-2">
           {/* Download Section */}
 
-          <Card className="bg-white/80 backdrop-blur-sm shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Download className="h-5 w-5 text-blue-600" />
-                <span>Question Paper</span>
+          <Card className="w-full max-w-sm  bg-white/70 p-6 backdrop-blur-sm shadow-lg">
+            <CardHeader className="flex flex-col items-center border-b border-gray-200 pb-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600 shadow-inner">
+                <Download className="h-6 w-6" />
+              </div>
+              <CardTitle className="mt-4 text-2xl font-bold tracking-tight text-gray-800">
+                Question Paper
               </CardTitle>
-              <CardDescription>
-                Download the assignment question paper
+              <CardDescription className="mt-1 text-sm text-gray-500">
+                Download the assignment question paper.
               </CardDescription>
             </CardHeader>
-            <CardContent style={{alignItems:'center', justifyContent:'center'}}>
+
+            <CardContent className="flex flex-col items-center pt-4">
+              {/* File details */}
+              <div className="w-full space-y-2 text-center text-gray-600">
+                <div className="flex items-center justify-center">
+                  <span className="text-xl leading-none text-blue-500">📄</span>
+                  <p
+                    className="ml-2 truncate font-medium"
+                    title={questionsPaperUrl.split("/").pop()}
+                  >
+                    {questionsPaperUrl.split("/").pop()}
+                  </p>
+                </div>
+                <p className="text-xs text-gray-400">
+                  • Read carefully before submission
+                </p>
+              </div>
+
               <a
+                className="mt-6 w-full"
                 href={questionsPaperUrl}
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <Button
-                  // onClick={downloadQuestionPaper}
-                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                >
-                  <Download className="h-4 w-4 mr-2" />
+                <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 mt-6">
+                  <Download className="mr-2 h-4 w-4 transition-transform duration-300 group-hover:translate-y-0.5" />
                   Download Question Paper
                 </Button>
               </a>
-              <p className="text-xs text-gray-500 mt-2 text-center">
-                {/* PDF • {assignment?.questionPaper} */}
-              </p>
             </CardContent>
           </Card>
 
