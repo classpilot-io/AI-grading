@@ -7,10 +7,7 @@ import { requireRole } from "@/authUtils";
 import { randomUUID } from "crypto";
 
 export async function POST(req: Request) {
-  const { user, supabase, error } = await requireRole(req, [
-    "student",
-    "teacher",
-  ]);
+  const { user, supabase, error } = await requireRole(req, ["student"]);
 
   if (error || !user) {
     return generateErrorResponse(
