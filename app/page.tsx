@@ -92,9 +92,8 @@ export default function Home() {
                 className="bg-white text-blue-600 hover:bg-gray-100 px-4"
                 onClick={() => {
                   Cookies.remove(AUTH_COOKIE, { path: "/" });
-                  setTimeout(() => {
-                    router.push("/login")
-                  }, 1000);
+
+                  window.location.href = "/login";
                 }}
               >
                 Logout
