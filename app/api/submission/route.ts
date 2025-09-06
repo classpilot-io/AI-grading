@@ -35,7 +35,29 @@ export async function POST(req: Request) {
       );
     }
 
-    var studentId = user.id;
+    const studentId = user.id;
+
+    // Check for an existing submission from this student for this assignment
+    const { data: existingSubmission } = await supabase
+      .from("Submission")
+      .select("id")
+      .eq("assignmentId", assignmentId)
+      .eq("studentId", studentId)
+      .maybeSingle();
+
+    let submissionId: string;
+    let newSubmission = false;
+
+    if (existingSubmission) {
+      // If a submission exists, use its ID for the update
+      submissionId = existingSubmission.id;
+    } else {
+      // If no submission exists, generate a new ID and prepare to insert a new row
+      submissionId = randomUUID();
+      newSubmission = true;
+    }
+
+    // Upload the file to Supabase Storage, using the same path for overwriting
     const filePath = `submissions/${assignmentId}/${studentId}/${answerFile.name}`;
     const { error: answerUploadError } = await supabase.storage
       .from("files")
@@ -48,46 +70,65 @@ export async function POST(req: Request) {
       );
     }
 
+    // Get the public URL for the uploaded file
     const { data: signedFile } = supabase.storage
       .from("files")
       .getPublicUrl(filePath);
 
     const submissionFileUrl = signedFile.publicUrl;
-    const submissionId = randomUUID();
 
-    const { data: submissionData, error: submissionInsertError } =
-      await supabase
+    const submissionData = {
+      assignmentId,
+      studentId,
+      studentIdentifier,
+      submissionFilePath: submissionFileUrl,
+      status: "pending",
+      scoreTotal: null,
+      summary: null,
+      gradedAt: null,
+    };
+
+    let result;
+    if (newSubmission) {
+      // Create a new submission record
+      const { data: insertData, error: insertError } = await supabase
         .from("Submission")
-        .insert({
-          id: submissionId,
-          assignmentId,
-          studentId,
-          studentIdentifier,
-          submissionFilePath: submissionFileUrl,
-          // status: "submitted",
-          // scoreTotal: null,
-          // summary: null,
-          // gradedAt: null,
-        })
+        .insert({ id: submissionId, ...submissionData })
         .select()
         .maybeSingle();
 
-    if (submissionInsertError) {
-      return generateErrorResponse(
-        submissionInsertError.message,
-        HTTP_STATUS_CODES.HTTP_INTERNAL_SERVER_ERROR
-      );
+      if (insertError) {
+        return generateErrorResponse(
+          insertError.message,
+          HTTP_STATUS_CODES.HTTP_INTERNAL_SERVER_ERROR
+        );
+      }
+      result = insertData;
+    } else {
+      // Update the existing submission record
+      const { data: updateData, error: updateError } = await supabase
+        .from("Submission")
+        .update(submissionData)
+        .eq("id", submissionId)
+        .select()
+        .maybeSingle();
+
+      if (updateError) {
+        return generateErrorResponse(
+          updateError.message,
+          HTTP_STATUS_CODES.HTTP_INTERNAL_SERVER_ERROR
+        );
+      }
+      result = updateData;
     }
 
-    // // Trigger grading
-    // await fetch(`${process.env.SUPABASE_FUNCTIONS_URL}/grade-submission`, {
-    //   method: "POST",
-    //   headers: { Authorization: `Bearer ${process.env.SUPABASE_ANON_KEY}` },
-    //   body: JSON.stringify({ submissionId: data.id }),
-    // });
+    // Trigger grading function
+    supabase.functions.invoke('grade-submission', {
+      body: { submissionId, submissionFileUrl },
+    });
 
     return generateResultResponse({
-      submission: submissionData,
+      submission: result,
     });
   } catch (err: any) {
     return generateErrorResponse(
