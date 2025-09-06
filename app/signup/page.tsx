@@ -65,7 +65,6 @@ export default function SignupPage() {
       setLoading(true);
       const res: any = await PostFetcher("/auth/signup", formData, "POST");
       if (res?.hasError) {
-        console.log(res);
         setError(res?.errors?.[0] || "Login failed. Please try again.");
         return;
       }
