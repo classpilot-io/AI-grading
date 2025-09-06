@@ -79,6 +79,13 @@ export async function POST(req: Request) {
       );
     }
 
+    // // Trigger grading
+    // await fetch(`${process.env.SUPABASE_FUNCTIONS_URL}/grade-submission`, {
+    //   method: "POST",
+    //   headers: { Authorization: `Bearer ${process.env.SUPABASE_ANON_KEY}` },
+    //   body: JSON.stringify({ submissionId: data.id }),
+    // });
+
     return generateResultResponse({
       submission: submissionData,
     });
