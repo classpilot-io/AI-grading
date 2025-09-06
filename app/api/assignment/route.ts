@@ -27,7 +27,7 @@ export async function POST(req: Request) {
 
     const questionPaper = formData.get("questionPaper") as File | null;
     const answerKey = formData.get("answerKey") as File | null;
-console.log('levejjl', level);
+
     if (!subject || !name || !className || !level || !questionPaper) {
       return generateErrorResponse(
         "Required fields are missing",
