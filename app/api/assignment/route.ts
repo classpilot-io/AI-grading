@@ -136,22 +136,24 @@ export async function PUT(req: Request) {
     const questionPaper = formData.get("questionPaper") as File | null;
     const answerKey = formData.get("answerKey") as File | null;
 
-    const isNewQuestionPaperRaw = formData.get("isNewQuestionPaper") as string;
-    const isNewQuestionPaper = isNewQuestionPaperRaw === "true";
-    const isNewAnswerKeyRaw = formData.get("isNewAnswerKey") as string;
-    const isNewAnswerKey = isNewAnswerKeyRaw === "true";
+    const existingQuestionPaper = formData.get("existingQuestionPaper") as
+      | string
+      | null;
+    const existingAswerKey = formData.get("existingQuestionPaper") as
+      | string
+      | null;
 
-    // if (!subject || !name || !className || !level || !questionPaper) {
-    //   return generateErrorResponse(
-    //     "Required fields are missing",
-    //     HTTP_STATUS_CODES.HTTP_BAD_REQUEST
-    //   );
-    // }
+    if (!subject || !name || !className || !level || (!existingQuestionPaper && !questionPaper)) {
+      return generateErrorResponse(
+        "Required fields are missing",
+        HTTP_STATUS_CODES.HTTP_BAD_REQUEST
+      );
+    }
 
     let questionPaperUrl: string | undefined;
     let answerKeyUrl: string | undefined;
 
-    if (isNewQuestionPaper && questionPaper) {
+    if (!existingQuestionPaper && questionPaper) {
       const questionPath = `questions/${assignmentId}/${questionPaper.name}`;
       const { error: questionUploadError } = await supabase.storage
         .from("files")
@@ -168,7 +170,7 @@ export async function PUT(req: Request) {
       questionPaperUrl = questionSigned.publicUrl;
     }
 
-    if (isNewAnswerKey && answerKey) {
+    if (!existingAswerKey && answerKey) {
       const answerPath = `answers/${assignmentId}/${answerKey.name}`;
       const { error: answerUploadError } = await supabase.storage
         .from("files")
