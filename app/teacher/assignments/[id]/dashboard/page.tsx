@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,6 +14,8 @@ import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, Users, TrendingUp, Download, Eye } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { toast } from "sonner";
+import { GetFetcher } from "@/lib/helpers";
 
 // Mock data for submissions
 const mockSubmissions = [
@@ -91,51 +93,101 @@ const mockSubmissions = [
   },
 ];
 
-const mockAssignments = [
-  {
-    id: "1",
-    name: "Algebra Fundamentals Quiz",
-    className: "Grade 10A",
-    subject: "Mathematics",
-    description: "Basic algebra concepts and problem solving",
-    submissionCount: 12,
-    totalStudents: 15,
-    createdAt: "2024-01-15",
-    questionPaper: "algebra-quiz.pdf",
-    answerKey: "algebra-answers.pdf",
-  },
-  {
-    id: "2",
-    name: "Essay on Climate Change",
-    className: "Grade 9B",
-    subject: "English",
-    description: "Write a 500-word essay on climate change impacts",
-    submissionCount: 8,
-    totalStudents: 12,
-    createdAt: "2024-01-14",
-    questionPaper: null,
-    answerKey: "essay-rubric.pdf",
-  },
-  {
-    id: "3",
-    name: "Geometry Problem Set",
-    className: "Grade 11C",
-    subject: "Mathematics",
-    description: "Advanced geometry problems focusing on triangles and circles",
-    submissionCount: 20,
-    totalStudents: 22,
-    createdAt: "2024-01-13",
-    questionPaper: "geometry-problems.pdf",
-    answerKey: "geometry-solutions.pdf",
-  },
-];
+// const assignment?s = [
+//   {
+//     id: "1",
+//     name: "Algebra Fundamentals Quiz",
+//     className: "Grade 10A",
+//     subject: "Mathematics",
+//     description: "Basic algebra concepts and problem solving",
+//     submissionCount: 12,
+//     totalStudents: 15,
+//     createdAt: "2024-01-15",
+//     questionPaper: "algebra-quiz.pdf",
+//     answerKey: "algebra-answers.pdf",
+//   },
+//   {
+//     id: "2",
+//     name: "Essay on Climate Change",
+//     className: "Grade 9B",
+//     subject: "English",
+//     description: "Write a 500-word essay on climate change impacts",
+//     submissionCount: 8,
+//     totalStudents: 12,
+//     createdAt: "2024-01-14",
+//     questionPaper: null,
+//     answerKey: "essay-rubric.pdf",
+//   },
+//   {
+//     id: "3",
+//     name: "Geometry Problem Set",
+//     className: "Grade 11C",
+//     subject: "Mathematics",
+//     description: "Advanced geometry problems focusing on triangles and circles",
+//     submissionCount: 20,
+//     totalStudents: 22,
+//     createdAt: "2024-01-13",
+//     questionPaper: "geometry-problems.pdf",
+//     answerKey: "geometry-solutions.pdf",
+//   },
+// ];
 
 export default function AssignmentDashboardClient() {
   const params = useParams();
-  const [submissions] = useState(mockSubmissions);
+  const [submissions, setSubmissions] = useState<any>([]);
   const [classSummary, setClassSummary] = useState<any>(null);
   const [generating, setGenerating] = useState(false);
-  const mockAssignment: any = mockAssignments.find((a) => a.id === params.id) || {};
+  const [assignment, setAssignment] = useState<any>({});
+  const [isDataLoading, setIsDataLoading] = useState(false);
+
+  const getAssignment = async () => {
+    try {
+      const res: any = await GetFetcher(`/assignment/get?id=${params?.id}`);
+      if (res?.hasError) {
+        toast.error(
+          res?.errors?.[0] || "Failed to fetch assignment. Please try again."
+        );
+        return;
+      }
+      setAssignment(res?.assignment);
+    } catch (error) {
+      console.error("Error fetching assignment:", error);
+      toast.error("Something went wrong while fetching assignment.");
+    }
+  };
+
+  const getSubmissions = async () => {
+    try {
+      const res: any = await GetFetcher(
+        `/submission/getAssignmentSubmissions?assignmentId=${params?.id}`
+      );
+      if (res?.hasError) {
+        toast.error(
+          res?.errors?.[0] || "Failed to fetch submissions. Please try again."
+        );
+        return;
+      }
+      setSubmissions(res?.submissions);
+    } catch (error) {
+      console.error("Error fetching submissions:", error);
+      toast.error("Something went wrong while fetching submissions.");
+    }
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsDataLoading(true);
+      try {
+        await Promise.all([getAssignment(), getSubmissions()]);
+      } catch (err) {
+        console.log("Error in fetching assignment or submissions: ", err);
+      } finally {
+        setIsDataLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const generateClassSummary = async () => {
     setGenerating(true);
@@ -177,6 +229,31 @@ export default function AssignmentDashboardClient() {
     if (percentage >= 70) return "outline";
     return "destructive";
   };
+  const onShowInfo = (e: any) => {
+    e.preventDefault();
+    toast.info("Feature coming soon!");
+  };
+
+  const getStatusBadgeVariant = (status: any) => {
+    switch (status) {
+      case "graded":
+        return "default";
+      case "failed":
+        return "destructive";
+      case "pending":
+        return "secondary";
+      default:
+        return "secondary";
+    }
+  };
+
+  if (isDataLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 sm:px-6 lg:px-8">
@@ -193,17 +270,29 @@ export default function AssignmentDashboardClient() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              {mockAssignment.name}
+              {assignment?.name}
             </h1>
-            <div className="flex items-center space-x-3 mt-2">
-              <Badge variant="secondary">{mockAssignment.subject}</Badge>
+            <div className="flex items-center space-x-3 mt-2 capitalize">
+              <Badge
+                variant="secondary"
+                className={
+                  assignment.subject === "mathematics"
+                    ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                    : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                }
+              >
+                {assignment?.subject}
+              </Badge>
               <span className="text-sm text-gray-500">
-                {mockAssignment.className}
+                {assignment?.className}
               </span>
             </div>
           </div>
           <Button
-            onClick={generateClassSummary}
+            // style={{ pointerEvents: "none" }}
+            onClick={(e) => {
+              onShowInfo(e);
+            }}
             disabled={generating}
             className="mt-4 sm:mt-0 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
           >
@@ -214,7 +303,7 @@ export default function AssignmentDashboardClient() {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid gap-6 mb-8 md:grid-cols-3">
+      <div className="grid gap-6 mb-8 md:grid-cols-2">
         <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-blue-700">
@@ -226,7 +315,7 @@ export default function AssignmentDashboardClient() {
               {submissions.length}
             </div>
             <p className="text-xs text-blue-600">
-              {submissions.length} of {mockAssignment.totalStudents} students
+              {submissions.length} of {assignment?.totalStudents} students
             </p>
           </CardContent>
         </Card>
@@ -241,33 +330,19 @@ export default function AssignmentDashboardClient() {
             <div className="text-2xl font-bold text-emerald-900">
               {submissions.length > 0
                 ? Math.round(
-                    submissions.reduce((acc, s) => acc + s.score, 0) /
-                      submissions.length
+                    submissions.reduce(
+                      (acc: any, s: any) =>
+                        acc +
+                        (Number(s.total_submission_marks_awarded) /
+                          Number(s.total_submission_marks_available)) *
+                          100,
+                      0
+                    ) / submissions.length
                   )
                 : 0}
               %
             </div>
             <p className="text-xs text-emerald-600">Class performance</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-r from-orange-50 to-red-50 border-orange-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-orange-700">
-              Completion Rate
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-900">
-              {Math.round(
-                (submissions.length / mockAssignment.totalStudents) * 100
-              )}
-              %
-            </div>
-            {/* <Progress
-              value={(submissions.length / mockAssignment.totalStudents) * 100}
-              className="mt-2"
-            /> */}
           </CardContent>
         </Card>
       </div>
@@ -352,41 +427,56 @@ export default function AssignmentDashboardClient() {
             </div>
           ) : (
             <div className="space-y-3">
-              {submissions.map((submission, index) => (
-                <Link
-                  key={submission.id}
-                  href={`/teacher/assignments/${params.id}/submissions/${submission.id}`}
-                >
+              {submissions?.map((submission: any, index: any) => {
+                // Check the status to decide if the submission is clickable
+                const isClickable = submission.status === "graded";
+
+                // Define common styling for the submission card
+                const cardStyle = {
+                  animationDelay: `${index * 100}ms`,
+                  animation: "fadeInUp 0.6s ease-out forwards",
+                };
+
+                const cardContent = (
                   <div
-                    className="flex flex-col md:flex-row md:items-center md:justify-between p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200 cursor-pointer group"
-                    style={{
-                      animationDelay: `${index * 100}ms`,
-                      animation: "fadeInUp 0.6s ease-out forwards",
-                    }}
+                    className={`flex flex-col md:flex-row md:items-center md:justify-between p-4 rounded-lg border border-gray-200 transition-all duration-200 ${
+                      isClickable
+                        ? "hover:border-blue-300 hover:shadow-md cursor-pointer group"
+                        : "cursor-not-allowed opacity-70"
+                    }`}
+                    style={cardStyle}
                   >
                     {/* Left Section */}
                     <div className="flex-1 w-full">
                       <div className="flex flex-col md:flex-row md:items-center md:space-x-3">
-                        <div className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
-                          {submission.studentName}
+                        <div
+                          className={`font-medium text-gray-900 transition-colors ${
+                            isClickable ? "group-hover:text-blue-600" : ""
+                          }`}
+                        >
+                          {submission?.User?.name}
                         </div>
                         <Badge
-                          variant={getScoreBadgeVariant(
-                            submission.score,
-                            submission.totalScore
-                          )}
-                          className="mt-1 md:mt-0 md:ml-auto w-fit"
+                          className={`mt-1 md:mt-0 md:ml-auto w-fit capitalize ${
+                            getStatusBadgeVariant(submission.status) ===
+                            "default"
+                              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                              : getStatusBadgeVariant(submission.status) ===
+                                "destructive"
+                              ? "bg-red-100 text-red-700 hover:bg-red-200"
+                              : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                          }`}
                         >
-                          {submission.score}/{submission.totalScore}
+                          {submission.status}
                         </Badge>
                       </div>
                       <div className="flex flex-col md:flex-row md:items-center md:space-x-4 mt-1 text-sm text-gray-500">
                         <span className="truncate">
-                          {submission.studentEmail}
+                          {submission?.User?.email}
                         </span>
                         <span className="hidden md:inline">•</span>
                         <span>
-                          {new Date(submission.submittedAt).toLocaleDateString(
+                          {new Date(submission?.gradedAt).toLocaleDateString(
                             "en-GB"
                           )}
                         </span>
@@ -397,20 +487,50 @@ export default function AssignmentDashboardClient() {
                     <div className="flex items-center justify-between md:justify-end mt-3 md:mt-0 space-x-3">
                       <div
                         className={`text-lg font-semibold ${getScoreColor(
-                          submission.score,
-                          submission.totalScore
+                          submission.total_submission_marks_awarded,
+                          submission.total_submission_marks_available
                         )}`}
                       >
-                        {Math.round(
-                          (submission.score / submission.totalScore) * 100
+                        {/* Conditionally display the score only if graded */}
+                        {submission.status === "graded" ? (
+                          <>
+                            {Math.round(
+                              (Number(
+                                submission.total_submission_marks_awarded
+                              ) /
+                                Number(
+                                  submission.total_submission_marks_available
+                                )) *
+                                100
+                            )}
+                            %
+                          </>
+                        ) : (
+                          <span className="text-gray-400">--%</span>
                         )}
-                        %
                       </div>
-                      <Eye className="h-4 w-4 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                      {/* Only show the eye icon for graded submissions */}
+                      {isClickable && (
+                        <Eye className="h-4 w-4 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                      )}
                     </div>
                   </div>
-                </Link>
-              ))}
+                );
+
+                // Conditional rendering for the Link component
+                if (isClickable) {
+                  return (
+                    <Link
+                      key={submission.id}
+                      href={`/teacher/assignments/${params.id}/submissions/${submission.id}`}
+                    >
+                      {cardContent}
+                    </Link>
+                  );
+                } else {
+                  return <div key={submission.id}>{cardContent}</div>;
+                }
+              })}
             </div>
           )}
         </CardContent>

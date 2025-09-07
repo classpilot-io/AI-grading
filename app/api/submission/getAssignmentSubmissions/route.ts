@@ -56,9 +56,9 @@ export async function GET(req: Request) {
     const mappedData = submissionsData?.map((s) => ({
       ...s,
       total_submission_marks_awarded:
-        s.results?.total_submission_marks_awarded ?? null,
+        s.results?.submission_awarded_marks ?? null,
       total_submission_marks_available:
-        s.results?.total_submission_marks_available ?? null,
+        s.results?.submission_total_marks ?? null,
       results: undefined,
     }));
 

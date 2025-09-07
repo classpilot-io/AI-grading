@@ -40,6 +40,7 @@ export async function GET(req: Request) {
             status,
             gradedAt,
             results,
+            submissionFilePath,
             User (
                 name,
                 email

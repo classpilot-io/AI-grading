@@ -57,8 +57,13 @@ export async function POST(req: Request) {
       newSubmission = true;
     }
 
+    const sanitizeFileName = (name: string) =>
+      name.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9._-]/g, "");
+
+    const safeFileName = sanitizeFileName(answerFile.name);
+
     // Upload the file to Supabase Storage, using the same path for overwriting
-    const filePath = `submissions/${assignmentId}/${studentId}/${answerFile.name}`;
+    const filePath = `submissions/${assignmentId}/${studentId}/${safeFileName}`;
     const { error: answerUploadError } = await supabase.storage
       .from("files")
       .upload(filePath, answerFile, { upsert: true });
@@ -85,7 +90,7 @@ export async function POST(req: Request) {
       status: "pending",
       scoreTotal: null,
       summary: null,
-      gradedAt: null,
+      gradedAt: new Date().toISOString(),
     };
 
     let result;

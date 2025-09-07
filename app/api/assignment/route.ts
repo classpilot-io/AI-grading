@@ -22,13 +22,13 @@ export async function POST(req: Request) {
     const subject = formData.get("subject") as string | null;
     const name = formData.get("name") as string | null;
     const className = formData.get("className") as string | null;
-    const level = formData.get("level") as string | null;
+    // const level = formData.get("level") as string | null;
     const description = formData.get("description") as string | null;
 
     const questionPaper = formData.get("questionPaper") as File | null;
     const answerKey = formData.get("answerKey") as File | null;
 
-    if (!subject || !name || !className || !level || !questionPaper) {
+    if (!subject || !name || !className || !questionPaper) {
       return generateErrorResponse(
         "Required fields are missing",
         HTTP_STATUS_CODES.HTTP_BAD_REQUEST
@@ -82,7 +82,7 @@ export async function POST(req: Request) {
           subject,
           name,
           className,
-          level,
+          // level,
           description: description ?? "",
           questionPaperPath: questionPaperUrl,
           answerKeyPath: answerKeyUrl,
@@ -130,7 +130,7 @@ export async function PUT(req: Request) {
     const subject = formData.get("subject") as string | null;
     const name = formData.get("name") as string | null;
     const className = formData.get("className") as string | null;
-    const level = formData.get("level") as string | null;
+    // const level = formData.get("level") as string | null;
     const description = formData.get("description") as string | null;
 
     const questionPaper = formData.get("questionPaper") as File | null;
@@ -189,7 +189,7 @@ export async function PUT(req: Request) {
       subject: subject ?? undefined,
       name: name ?? undefined,
       className: className ?? undefined,
-      level: level ?? undefined,
+      // level: level ?? undefined,
       description: description ?? undefined,
     };
 
