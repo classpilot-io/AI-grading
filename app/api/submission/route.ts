@@ -5,6 +5,7 @@ import {
 } from "@/lib/responseUtils";
 import { requireRole } from "@/authUtils";
 import { randomUUID } from "crypto";
+import { sanitizeFileName } from "@/lib/helpers";
 
 export async function POST(req: Request) {
   const { user, supabase, error } = await requireRole(req, [
@@ -35,6 +36,28 @@ export async function POST(req: Request) {
       );
     }
 
+    // Get uploaded answer key file
+    const { data: assignmentData, error: assignmentFetchError } = await supabase
+      .from("Assignment")
+      .select("answerKeyPath")
+      .eq("id", assignmentId)
+      .maybeSingle();
+
+    if (assignmentFetchError) {
+      return generateErrorResponse(
+        assignmentFetchError.message,
+        HTTP_STATUS_CODES.HTTP_INTERNAL_SERVER_ERROR
+      );
+    }
+    if (!assignmentData) {
+      return generateErrorResponse(
+        "Assignment not found",
+        HTTP_STATUS_CODES.HTTP_NOT_FOUND
+      );
+    }
+
+    const answerKeyPath = assignmentData?.answerKeyPath;
+
     const studentId = user.id;
 
     // Check for an existing submission from this student for this assignment
@@ -56,9 +79,6 @@ export async function POST(req: Request) {
       submissionId = randomUUID();
       newSubmission = true;
     }
-
-    const sanitizeFileName = (name: string) =>
-      name.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9._-]/g, "");
 
     const safeFileName = sanitizeFileName(answerFile.name);
 
@@ -129,7 +149,7 @@ export async function POST(req: Request) {
 
     // Trigger grading function
     supabase.functions.invoke('grade-submission', {
-      body: { submissionId, submissionFileUrl },
+      body: { submissionId, submissionFileUrl, ...(answerKeyPath ? { answerKeyUrl: answerKeyPath } : {}) },
     });
 
     return generateResultResponse({

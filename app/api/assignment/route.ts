@@ -5,6 +5,7 @@ import {
   generateResultResponse,
 } from "@/lib/responseUtils";
 import { requireRole } from "@/authUtils";
+import { sanitizeFileName } from "@/lib/helpers";
 
 export async function POST(req: Request) {
   const { user, supabase, error } = await requireRole(req, ["teacher"]);
@@ -40,7 +41,9 @@ export async function POST(req: Request) {
     let answerKeyUrl = "";
 
     if (questionPaper) {
-      const questionPath = `questions/${assignmentId}/${questionPaper.name}`;
+      const safeFileName = sanitizeFileName(questionPaper.name);
+
+      const questionPath = `questions/${assignmentId}/${safeFileName}`;
       const { error: questionUploadError } = await supabase.storage
         .from("files")
         .upload(questionPath, questionPaper, { upsert: true });
@@ -57,7 +60,8 @@ export async function POST(req: Request) {
     }
 
     if (answerKey) {
-      const answerPath = `answers/${assignmentId}/${answerKey.name}`;
+      const safeAnswerKeyName = sanitizeFileName(answerKey.name);
+      const answerPath = `answers/${assignmentId}/${safeAnswerKeyName}`;
       const { error: answerUploadError } = await supabase.storage
         .from("files")
         .upload(answerPath, answerKey, { upsert: true });
@@ -152,7 +156,8 @@ export async function PUT(req: Request) {
     let answerKeyUrl: string | undefined;
 
     if (isNewQuestionPaper && questionPaper) {
-      const questionPath = `questions/${assignmentId}/${questionPaper.name}`;
+      const safeQnPaperName = sanitizeFileName(questionPaper.name);
+      const questionPath = `questions/${assignmentId}/${safeQnPaperName}`;
       const { error: questionUploadError } = await supabase.storage
         .from("files")
         .upload(questionPath, questionPaper, { upsert: true });
@@ -169,7 +174,8 @@ export async function PUT(req: Request) {
     }
 
     if (isNewAnswerKey && answerKey) {
-      const answerPath = `answers/${assignmentId}/${answerKey.name}`;
+      const safeNewAnswerKeyName = sanitizeFileName(answerKey.name);
+      const answerPath = `answers/${assignmentId}/${safeNewAnswerKeyName}`;
       const { error: answerUploadError } = await supabase.storage
         .from("files")
         .upload(answerPath, answerKey, { upsert: true });

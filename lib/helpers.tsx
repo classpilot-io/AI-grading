@@ -1,4 +1,3 @@
-
 import Cookies from "js-cookie";
 import { AUTH_COOKIE, BASE_URL } from "./constants";
 
@@ -60,9 +59,9 @@ export async function PostFetcher<T>(
     credentials: "include",
   });
 
-//   if (!res.ok) {
-//     throw new Error(`${method} request failed: ${res.status} ${res.statusText}`);
-//   }
+  //   if (!res.ok) {
+  //     throw new Error(`${method} request failed: ${res.status} ${res.statusText}`);
+  //   }
 
   const data: any = await res.json();
 
@@ -72,3 +71,8 @@ export async function PostFetcher<T>(
 
   return data.result;
 }
+
+export const sanitizeFileName = (name: string) => {
+  if (!name) return "file";
+  name.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9._-]/g, "");
+};

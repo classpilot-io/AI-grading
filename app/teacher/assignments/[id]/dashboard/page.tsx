@@ -277,8 +277,8 @@ export default function AssignmentDashboardClient() {
                 variant="secondary"
                 className={
                   assignment.subject === "mathematics"
-                    ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
-                    : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                    ? "bg-blue-100 text-blue-700 hover:bg-blue-200 capitalize"
+                    : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 capitalize"
                 }
               >
                 {assignment?.subject}
@@ -330,18 +330,27 @@ export default function AssignmentDashboardClient() {
             <div className="text-2xl font-bold text-emerald-900">
               {submissions.length > 0
                 ? Math.round(
-                    submissions.reduce(
-                      (acc: any, s: any) =>
-                        acc +
-                        (Number(s.total_submission_marks_awarded) /
-                          Number(s.total_submission_marks_available)) *
-                          100,
-                      0
-                    ) / submissions.length
+                    submissions.reduce((acc: number, s: any) => {
+                      const available = Number(
+                        s.total_submission_marks_available
+                      );
+                      const awarded = Number(s.total_submission_marks_awarded);
+
+                      if (available > 0) {
+                        return acc + (awarded / available) * 100;
+                      } else {
+                        return acc; // skip invalid 0 denominator
+                      }
+                    }, 0) /
+                      submissions.filter(
+                        (s: any) =>
+                          Number(s.total_submission_marks_available) > 0
+                      ).length || 1
                   )
                 : 0}
               %
             </div>
+
             <p className="text-xs text-emerald-600">Class performance</p>
           </CardContent>
         </Card>
@@ -494,15 +503,19 @@ export default function AssignmentDashboardClient() {
                         {/* Conditionally display the score only if graded */}
                         {submission.status === "graded" ? (
                           <>
-                            {Math.round(
-                              (Number(
-                                submission.total_submission_marks_awarded
-                              ) /
-                                Number(
-                                  submission.total_submission_marks_available
-                                )) *
-                                100
-                            )}
+                            {Number(
+                              submission.total_submission_marks_available
+                            ) > 0
+                              ? Math.round(
+                                  (Number(
+                                    submission.total_submission_marks_awarded
+                                  ) /
+                                    Number(
+                                      submission.total_submission_marks_available
+                                    )) *
+                                    100
+                                )
+                              : 0}
                             %
                           </>
                         ) : (
