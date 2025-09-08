@@ -113,6 +113,7 @@ export default function TeacherLayout({
                 className="bg-blue-600 text-white hover:bg-blue-800 px-4 w-full mb-2"
                 onClick={() => {
                   Cookies.remove(AUTH_COOKIE, { path: "/" });
+                  window.location.href = "/login";
                 }}
               >
                 Logout
@@ -174,6 +175,7 @@ export default function TeacherLayout({
               className="bg-blue-600 text-white hover:bg-blue-800 px-4 w-full mb-2"
               onClick={() => {
                 Cookies.remove(AUTH_COOKIE, { path: "/" });
+                window.location.href = "/login";
               }}
             >
               Logout
