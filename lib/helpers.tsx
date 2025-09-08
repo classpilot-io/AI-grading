@@ -74,5 +74,5 @@ export async function PostFetcher<T>(
 
 export const sanitizeFileName = (name: string) => {
   if (!name) return "file";
-  name.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9._-]/g, "");
+  return name.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9._-]/g, "");
 };

@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     // Get uploaded answer key file
     const { data: assignmentData, error: assignmentFetchError } = await supabase
       .from("Assignment")
-      .select("answerKeyPath")
+      .select(`answerKeyPath, subject`)
       .eq("id", assignmentId)
       .maybeSingle();
 
@@ -57,6 +57,7 @@ export async function POST(req: Request) {
     }
 
     const answerKeyPath = assignmentData?.answerKeyPath;
+    const submissionType = assignmentData?.subject;
 
     const studentId = user.id;
 
@@ -149,7 +150,7 @@ export async function POST(req: Request) {
 
     // Trigger grading function
     supabase.functions.invoke('grade-submission', {
-      body: { submissionId, submissionFileUrl, ...(answerKeyPath ? { answerKeyUrl: answerKeyPath } : {}) },
+      body: { submissionId, submissionFileUrl, submissionType, ...(answerKeyPath ? { answerKeyUrl: answerKeyPath } : {}) },
     });
 
     return generateResultResponse({

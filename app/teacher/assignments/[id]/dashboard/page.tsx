@@ -438,7 +438,8 @@ export default function AssignmentDashboardClient() {
             <div className="space-y-3">
               {submissions?.map((submission: any, index: any) => {
                 // Check the status to decide if the submission is clickable
-                const isClickable = submission.status === "graded";
+                // const isClickable = submission.status === "graded";
+                const isClickable = false;
 
                 // Define common styling for the submission card
                 const cardStyle = {
@@ -451,7 +452,7 @@ export default function AssignmentDashboardClient() {
                     className={`flex flex-col md:flex-row md:items-center md:justify-between p-4 rounded-lg border border-gray-200 transition-all duration-200 ${
                       isClickable
                         ? "hover:border-blue-300 hover:shadow-md cursor-pointer group"
-                        : "cursor-not-allowed opacity-70"
+                        : " opacity-70"
                     }`}
                     style={cardStyle}
                   >

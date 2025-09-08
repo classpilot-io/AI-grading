@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import ReactMarkdown from "react-markdown";
 import {
   Card,
   CardContent,
@@ -211,173 +212,216 @@ export default function SubmissionView() {
 
       {/* Graded Submission Details */}
       <div className="px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto mt-8">
-      {/* Main heading with a new color for emphasis */}
-      <h1 className="text-2xl font-bold text-indigo-800 mb-6">
-        Graded Submission Details
-      </h1>
+        {/* Main heading with a new color for emphasis */}
+        <h1 className="text-2xl font-bold text-indigo-800 mb-6">
+          Graded Submission Details
+        </h1>
 
-      {submission?.results?.grades?.map((grade, index) => (
-        <Card key={index} className="mb-6 p-6 rounded-lg shadow-sm">
-          <div className="flex justify-between items-center mb-4">
-            {grade.question_number && (
-              // Question number heading with a distinct color
-              <h2 className="text-xl font-semibold text-indigo-700">
-                Question {grade.question_number}
-              </h2>
-            )}
-
-            <div className="flex justify-end gap-6 items-center">
-              {/* Display graded marks out of total for the question */}
-              {grade.awarded_marks !== undefined &&
-                grade.total_marks !== undefined && (
-                  <div className="text-lg font-bold text-blue-600">
-                    {grade.awarded_marks}/{grade.total_marks}
-                  </div>
+        {assignment?.subject?.toLowerCase() === "mathematics" &&
+          submission?.results?.grades?.map((grade: any, index: any) => (
+            <Card key={index} className="mb-6 p-6 rounded-lg shadow-sm">
+              <div className="flex justify-between items-center mb-4">
+                {grade.question_number && (
+                  // Question number heading with a distinct color
+                  <h2 className="text-xl font-semibold text-indigo-700">
+                    Question {grade.question_number}
+                  </h2>
                 )}
-              {/* Display question status */}
-              {grade.status && (
-                <span
-                  className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                    grade.status === "Correct"
-                      ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
-                  }`}
-                >
-                  {grade.status}
-                </span>
-              )}
-            </div>
-          </div>
 
-          {/* Main Question Text and Answer sections */}
-          {grade.question_text && (
-            <div className="space-y-4 mb-4">
-              <div>
-                {/* Heading label for the question text */}
-                <p className="text-sm font-semibold text-indigo-500">
-                  Question:
-                </p>
-                <div className="mt-1 text-base text-gray-900">
-                  <KaTeXComponent mathText={grade.question_text} />
+                <div className="flex justify-end gap-6 items-center">
+                  {/* Display graded marks out of total for the question */}
+                  {grade.awarded_marks !== undefined &&
+                    grade.total_marks !== undefined && (
+                      <div className="text-lg font-bold text-blue-600">
+                        {grade.awarded_marks}/{grade.total_marks}
+                      </div>
+                    )}
+                  {/* Display question status */}
+                  {grade.status && (
+                    <span
+                      className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                        grade.status === "Correct"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {grade.status}
+                    </span>
+                  )}
                 </div>
               </div>
-              {grade.answer_text && (
-                <div>
-                  {/* Heading label for the student's answer */}
-                  <p className="text-sm font-semibold text-indigo-500">
-                    Student's Answer:
-                  </p>
-                  <div className="mt-1 text-base text-gray-900">
-                    <KaTeXComponent
-                      mathText={grade.answer_text.replace(/\\n/g, "\n")}
-                    />
-                  </div>
-                </div>
-              )}
-              {grade.correct_answer &&
-                grade.correct_answer !== "null" &&
-                grade.correct_answer !== null && (
+
+              {/* Main Question Text and Answer sections */}
+              {grade.question_text && (
+                <div className="space-y-4 mb-4">
                   <div>
-                    {/* Correct answer heading is already green, looks great */}
-                    <p className="text-sm font-semibold text-green-600">
-                      Correct Answer:
+                    {/* Heading label for the question text */}
+                    <p className="text-sm font-semibold text-indigo-500">
+                      Question:
                     </p>
                     <div className="mt-1 text-base text-gray-900">
-                      <KaTeXComponent mathText={grade.correct_answer} />
+                      <KaTeXComponent mathText={grade.question_text} />
                     </div>
                   </div>
-                )}
-            </div>
-          )}
-
-          {/* Rendering Parts if they exist */}
-          {grade.parts && grade.parts.length > 0 && (
-            <div className="space-y-4 border-t pt-4 mt-4">
-              {/* Main heading for the breakdown section */}
-              <h3 className="text-lg font-semibold text-indigo-700">
-                Breakdown of Marks
-              </h3>
-              {grade.parts.map((part, partIndex) => (
-                <div
-                  key={partIndex}
-                  className="bg-gray-50 p-4 rounded-lg border border-gray-200"
-                >
-                  <div className="flex justify-between items-center mb-2">
-                    {part.part_number && (
-                      // Part number heading with a distinct, but slightly lighter color
-                      <h4 className="text-md font-medium text-indigo-600">
-                        Part {part.part_number}
-                      </h4>
-                    )}
-                    {/* Display graded marks out of total for the part */}
-                    <div className="flex justify-end gap-6 items-center">
-                      {part.awarded_marks !== undefined &&
-                        part.total_marks !== undefined && (
-                          <div className="text-md font-bold text-blue-600">
-                            {part.awarded_marks}/{part.total_marks}
-                          </div>
-                        )}
-                      {/* Display part status */}
-                      {part.status && (
-                        <span
-                          className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                            grade.status === "Correct"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {grade.status}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {part.question_text && (
+                  {grade.answer_text && (
                     <div>
-                      {/* Heading label for the part's question text */}
-                      <p className="text-sm font-semibold text-indigo-500">
-                        Question Text:
-                      </p>
-                      <div className="mt-1 text-base text-gray-900">
-                        <KaTeXComponent mathText={part.question_text} />
-                      </div>
-                    </div>
-                  )}
-
-                  {part.answer_text && (
-                    <div>
-                      {/* Heading label for the part's student answer */}
+                      {/* Heading label for the student's answer */}
                       <p className="text-sm font-semibold text-indigo-500">
                         Student's Answer:
                       </p>
                       <div className="mt-1 text-base text-gray-900">
                         <KaTeXComponent
-                          mathText={part.answer_text.replace(/\\n/g, "\n")}
+                          mathText={grade.answer_text.replace(/\\n/g, "\n")}
                         />
                       </div>
                     </div>
                   )}
-
-                  {part.correct_answer &&
-                    part.correct_answer !== "null" &&
-                    part.correct_answer !== null && (
+                  {grade.correct_answer &&
+                    grade.correct_answer !== "null" &&
+                    grade.correct_answer !== null && (
                       <div>
-                        {/* Correct answer heading for the part */}
+                        {/* Correct answer heading is already green, looks great */}
                         <p className="text-sm font-semibold text-green-600">
                           Correct Answer:
                         </p>
                         <div className="mt-1 text-base text-gray-900">
-                          <KaTeXComponent mathText={part.correct_answer} />
+                          <KaTeXComponent mathText={grade.correct_answer} />
                         </div>
                       </div>
                     )}
                 </div>
-              ))}
-            </div>
+              )}
+
+              {/* Rendering Parts if they exist */}
+              {grade.parts && grade.parts.length > 0 && (
+                <div className="space-y-4 border-t pt-4 mt-4">
+                  {/* Main heading for the breakdown section */}
+                  <h3 className="text-lg font-semibold text-indigo-700">
+                    Breakdown of Marks
+                  </h3>
+                  {grade.parts.map((part, partIndex) => (
+                    <div
+                      key={partIndex}
+                      className="bg-gray-50 p-4 rounded-lg border border-gray-200"
+                    >
+                      <div className="flex justify-between items-center mb-2">
+                        {part.part_number && (
+                          // Part number heading with a distinct, but slightly lighter color
+                          <h4 className="text-md font-medium text-indigo-600">
+                            Part {part.part_number}
+                          </h4>
+                        )}
+                        {/* Display graded marks out of total for the part */}
+                        <div className="flex justify-end gap-6 items-center">
+                          {part.awarded_marks !== undefined &&
+                            part.total_marks !== undefined && (
+                              <div className="text-md font-bold text-blue-600">
+                                {part.awarded_marks}/{part.total_marks}
+                              </div>
+                            )}
+                          {/* Display part status */}
+                          {part.status && (
+                            <span
+                              className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                                grade.status === "Correct"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-red-100 text-red-800"
+                              }`}
+                            >
+                              {grade.status}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {part.question_text && (
+                        <div>
+                          {/* Heading label for the part's question text */}
+                          <p className="text-sm font-semibold text-indigo-500">
+                            Question Text:
+                          </p>
+                          <div className="mt-1 text-base text-gray-900">
+                            <KaTeXComponent mathText={part.question_text} />
+                          </div>
+                        </div>
+                      )}
+
+                      {part.answer_text && (
+                        <div>
+                          {/* Heading label for the part's student answer */}
+                          <p className="text-sm font-semibold text-indigo-500">
+                            Student's Answer:
+                          </p>
+                          <div className="mt-1 text-base text-gray-900">
+                            <KaTeXComponent
+                              mathText={part.answer_text.replace(/\\n/g, "\n")}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {part.correct_answer &&
+                        part.correct_answer !== "null" &&
+                        part.correct_answer !== null && (
+                          <div>
+                            {/* Correct answer heading for the part */}
+                            <p className="text-sm font-semibold text-green-600">
+                              Correct Answer:
+                            </p>
+                            <div className="mt-1 text-base text-gray-900">
+                              <KaTeXComponent mathText={part.correct_answer} />
+                            </div>
+                          </div>
+                        )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          ))}
+
+        {assignment?.subject?.toLowerCase() === "english" &&
+          submission?.results && (
+            <Card className="mb-6 p-6 rounded-lg shadow-sm">
+              {/* Marks */}
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-indigo-700">
+                  Overall Marks
+                </h2>
+                <div className="text-lg font-bold text-blue-600">
+                  {submission.results.submission_awarded_marks}/
+                  {submission.results.submission_total_marks}
+                </div>
+              </div>
+
+              {/* Summary */}
+              {submission.results.summary && (
+                <div className="mb-6">
+                  <p className="text-sm font-semibold text-indigo-500">
+                    Summary:
+                  </p>
+                  <p className="mt-2 text-base text-gray-900">
+                    {submission.results.summary}
+                  </p>
+                </div>
+              )}
+
+              {/* Detailed Feedback (Markdown Rendered) */}
+              {submission.results.detailed_feedback && (
+                <div>
+                  <p className="text-sm font-semibold text-indigo-500">
+                    Detailed Feedback:
+                  </p>
+                  <div className="prose prose-indigo mt-2 text-gray-900 max-w-none leading-relaxed">
+                    <ReactMarkdown>
+                      {submission.results.detailed_feedback}
+                    </ReactMarkdown>
+                  </div>
+                </div>
+              )}
+            </Card>
           )}
-        </Card>
-      ))}
-    </div>
+      </div>
     </>
   );
 }
