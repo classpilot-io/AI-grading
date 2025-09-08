@@ -75,7 +75,10 @@ export default function AssignmentsPage() {
   );
   const [isLoading, setIsLoading] = useState(false);
 
+  const [isAssignmentLoading, setIsAssignmentLoading] = useState(false);
+
   const getAllAssignments = async () => {
+    setIsAssignmentLoading(true);
     try {
       const res: any = await GetFetcher(
         `/assignment/list?teacherId=${user?.userId}`
@@ -87,7 +90,10 @@ export default function AssignmentsPage() {
         toast.error("No assignments found.");
       }
     } catch (err: any) {
+      console.error("Error fetching assignments:", err);
       toast.error(err.message || "Failed to fetch assignments.");
+    } finally {
+      setIsAssignmentLoading(false);
     }
   };
 
@@ -168,8 +174,12 @@ export default function AssignmentsPage() {
     toast.info("Feature coming soon!");
   };
 
-  if (!user?.userId) {
-    return <div className="px-4 sm:px-6 lg:px-8">Loading...</div>;
+  if (!user?.userId || isAssignmentLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
   }
 
   return (
@@ -208,15 +218,15 @@ export default function AssignmentsPage() {
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-2">
+                  <div className="flex items-center space-x-2 mb-2 capitalize">
                     <Badge
                       variant={
-                        assignment.subject === "Mathematics"
+                        assignment.subject === "mathematics"
                           ? "default"
                           : "secondary"
                       }
                       className={
-                        assignment.subject === "Mathematics"
+                        assignment.subject === "mathematics"
                           ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
                           : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
                       }
@@ -246,12 +256,12 @@ export default function AssignmentsPage() {
                     </DropdownMenuItem>
                     <Link
                       href={`/teacher/assignments/${assignment.id}/dashboard`}
-                      style={{ pointerEvents: "none" }}
+                      // style={{ pointerEvents: "none" }}
                     >
                       <DropdownMenuItem
-                        onClick={(e) => {
-                          onShowInfo(e);
-                        }}
+                      // onClick={(e) => {
+                      //   onShowInfo(e);
+                      // }}
                       >
                         View Dashboard
                       </DropdownMenuItem>
@@ -312,13 +322,13 @@ export default function AssignmentsPage() {
 
                 <div
                   className="pt-2 border-t"
-                  onClick={(e) => {
-                    onShowInfo(e);
-                  }}
+                  // onClick={(e) => {
+                  //   onShowInfo(e);
+                  // }}
                 >
                   <Link
                     href={`/teacher/assignments/${assignment.id}/dashboard`}
-                    style={{ pointerEvents: "none" }}
+                    // style={{ pointerEvents: "none" }}
                   >
                     <Button variant="outline" size="sm" className="w-full">
                       View Dashboard
@@ -342,7 +352,10 @@ export default function AssignmentsPage() {
             Get started by creating your first assignment.
           </p>
           <div className="mt-6">
-            <Button onClick={() => setIsModalOpen(true)}>
+            <Button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+            >
               <Plus className="h-4 w-4 mr-2" />
               Create Assignment
             </Button>

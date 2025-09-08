@@ -5,6 +5,7 @@ import {
   generateResultResponse,
 } from "@/lib/responseUtils";
 import { requireRole } from "@/authUtils";
+import { sanitizeFileName } from "@/lib/helpers";
 
 export async function POST(req: Request) {
   const { user, supabase, error } = await requireRole(req, ["teacher"]);
@@ -22,13 +23,13 @@ export async function POST(req: Request) {
     const subject = formData.get("subject") as string | null;
     const name = formData.get("name") as string | null;
     const className = formData.get("className") as string | null;
-    const level = formData.get("level") as string | null;
+    // const level = formData.get("level") as string | null;
     const description = formData.get("description") as string | null;
 
     const questionPaper = formData.get("questionPaper") as File | null;
     const answerKey = formData.get("answerKey") as File | null;
 
-    if (!subject || !name || !className || !level || !questionPaper) {
+    if (!subject || !name || !className || !questionPaper) {
       return generateErrorResponse(
         "Required fields are missing",
         HTTP_STATUS_CODES.HTTP_BAD_REQUEST
@@ -40,7 +41,9 @@ export async function POST(req: Request) {
     let answerKeyUrl = "";
 
     if (questionPaper) {
-      const questionPath = `questions/${assignmentId}/${questionPaper.name}`;
+      const safeFileName = sanitizeFileName(questionPaper.name);
+
+      const questionPath = `questions/${assignmentId}/${safeFileName}`;
       const { error: questionUploadError } = await supabase.storage
         .from("files")
         .upload(questionPath, questionPaper, { upsert: true });
@@ -57,7 +60,8 @@ export async function POST(req: Request) {
     }
 
     if (answerKey) {
-      const answerPath = `answers/${assignmentId}/${answerKey.name}`;
+      const safeAnswerKeyName = sanitizeFileName(answerKey.name);
+      const answerPath = `answers/${assignmentId}/${safeAnswerKeyName}`;
       const { error: answerUploadError } = await supabase.storage
         .from("files")
         .upload(answerPath, answerKey, { upsert: true });
@@ -82,7 +86,7 @@ export async function POST(req: Request) {
           subject,
           name,
           className,
-          level,
+          // level,
           description: description ?? "",
           questionPaperPath: questionPaperUrl,
           answerKeyPath: answerKeyUrl,
@@ -130,58 +134,59 @@ export async function PUT(req: Request) {
     const subject = formData.get("subject") as string | null;
     const name = formData.get("name") as string | null;
     const className = formData.get("className") as string | null;
-    const level = formData.get("level") as string | null;
     const description = formData.get("description") as string | null;
 
     const questionPaper = formData.get("questionPaper") as File | null;
     const answerKey = formData.get("answerKey") as File | null;
 
-    const isNewQuestionPaperRaw = formData.get("isNewQuestionPaper") as string;
-    const isNewQuestionPaper = isNewQuestionPaperRaw === "true";
-    const isNewAnswerKeyRaw = formData.get("isNewAnswerKey") as string;
-    const isNewAnswerKey = isNewAnswerKeyRaw === "true";
-
-    // if (!subject || !name || !className || !level || !questionPaper) {
-    //   return generateErrorResponse(
-    //     "Required fields are missing",
-    //     HTTP_STATUS_CODES.HTTP_BAD_REQUEST
-    //   );
-    // }
-
     let questionPaperUrl: string | undefined;
     let answerKeyUrl: string | undefined;
 
-    if (isNewQuestionPaper && questionPaper) {
-      const questionPath = `questions/${assignmentId}/${questionPaper.name}`;
+    // Handle Question Paper upload if it's a File
+    if (questionPaper instanceof File) {
+      console.log("Uploading new question paper...", questionPaper);
+      const safeQnPaperName = sanitizeFileName(questionPaper.name);
+      console.log("Safe file name:", safeQnPaperName);
+      const questionPath = `questions/${assignmentId}/${safeQnPaperName}`;
+
       const { error: questionUploadError } = await supabase.storage
         .from("files")
         .upload(questionPath, questionPaper, { upsert: true });
-      if (questionUploadError)
+
+      if (questionUploadError) {
         return generateErrorResponse(
           questionUploadError.message,
           HTTP_STATUS_CODES.HTTP_INTERNAL_SERVER_ERROR
         );
+      }
 
       const { data: questionSigned } = supabase.storage
         .from("files")
         .getPublicUrl(questionPath);
+
       questionPaperUrl = questionSigned.publicUrl;
     }
 
-    if (isNewAnswerKey && answerKey) {
-      const answerPath = `answers/${assignmentId}/${answerKey.name}`;
+    // Handle Answer Key upload if it's a File
+    if (answerKey instanceof File) {
+      const safeNewAnswerKeyName = sanitizeFileName(answerKey.name);
+      const answerPath = `answers/${assignmentId}/${safeNewAnswerKeyName}`;
+
       const { error: answerUploadError } = await supabase.storage
         .from("files")
         .upload(answerPath, answerKey, { upsert: true });
-      if (answerUploadError)
+
+      if (answerUploadError) {
         return generateErrorResponse(
           answerUploadError.message,
           HTTP_STATUS_CODES.HTTP_INTERNAL_SERVER_ERROR
         );
+      }
 
       const { data: answerSigned } = supabase.storage
         .from("files")
         .getPublicUrl(answerPath);
+
       answerKeyUrl = answerSigned.publicUrl;
     }
 
@@ -189,7 +194,6 @@ export async function PUT(req: Request) {
       subject: subject ?? undefined,
       name: name ?? undefined,
       className: className ?? undefined,
-      level: level ?? undefined,
       description: description ?? undefined,
     };
 
@@ -209,11 +213,12 @@ export async function PUT(req: Request) {
         .select()
         .maybeSingle();
 
-    if (assignmentUpdateError)
+    if (assignmentUpdateError) {
       return generateErrorResponse(
         assignmentUpdateError.message,
         HTTP_STATUS_CODES.HTTP_INTERNAL_SERVER_ERROR
       );
+    }
 
     return generateResultResponse({ assignment: updatedAssignment });
   } catch (err: any) {
@@ -223,3 +228,4 @@ export async function PUT(req: Request) {
     );
   }
 }
+

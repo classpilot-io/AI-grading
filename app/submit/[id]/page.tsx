@@ -40,7 +40,6 @@ import Link from "next/link";
 
 export default function StudentSubmissionPage() {
   const params = useParams();
-  console.log("paramss:", params);
   const user = useUserStore((state: any) => state.user);
   const [assignment, setAssignment] = useState<any>();
 
@@ -49,16 +48,28 @@ export default function StudentSubmissionPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [questionsPaperUrl, setQuestionsPaperUrl] = useState<any>("");
 
+  const [isDataLoading, setIsDataLoading] = useState(false);
+
   const getAssignment = async () => {
-    const res: any = await GetFetcher(`/assignment/get?id=${params?.id}`);
-    if (res?.hasError) {
-      toast.error(
-        res?.errors?.[0] || "Failed to fetch assignment. Please try again."
-      );
-      return;
+    setIsDataLoading(true);
+    try {
+      const res: any = await GetFetcher(`/assignment/get?id=${params?.id}`);
+
+      if (res?.hasError) {
+        toast.error(
+          res?.errors?.[0] || "Failed to fetch assignment. Please try again."
+        );
+        return;
+      }
+
+      setAssignment(res?.assignment);
+      setQuestionsPaperUrl(res?.assignment?.questionPaperPath);
+    } catch (err: any) {
+      console.error("Error fetching assignment:", err);
+      toast.error(err.message || "Something went wrong. Please try again.");
+    } finally {
+      setIsDataLoading(false);
     }
-    setAssignment(res?.assignment);
-    setQuestionsPaperUrl(res?.assignment?.questionPaperPath);
   };
 
   useEffect(() => {
@@ -79,6 +90,7 @@ export default function StudentSubmissionPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!files) {
       toast.error("Please upload at least one file");
       return;
@@ -86,30 +98,45 @@ export default function StudentSubmissionPage() {
 
     setIsSubmitting(true);
 
-    const formData = new FormData();
+    try {
+      const formData = new FormData();
+      formData.append("answerFile", files as Blob);
+      formData.append("assignmentId", params.id as string);
+      formData.append("studentIdentifier", user?.userId);
 
-    formData?.append("answerFile", files as Blob);
-    formData?.append("assignmentId", params.id as string);
-    formData?.append("studentIdentifier", user?.userId);
-    const res: any = await PostFetcher("/submission", formData, "POST");
-    if (res?.hasError) {
-      toast.error(
-        res?.errors?.[0] || "Failed to create assignment. Please try again."
-      );
-      return;
-    }
-    if (res?.submission) {
+      const res: any = await PostFetcher("/submission", formData, "POST");
+
+      if (res?.hasError) {
+        toast.error(
+          res?.errors?.[0] || "Failed to create assignment. Please try again."
+        );
+        return;
+      }
+
+      if (res?.submission) {
+        setIsSubmitted(true);
+        toast.success("Your submission has been uploaded successfully!");
+      }
+    } catch (err: any) {
+      console.error("Error while submitting:", err);
+      toast.error(err.message || "Something went wrong. Please try again.");
+    } finally {
       setIsSubmitting(false);
-      setIsSubmitted(true);
-      toast.success("Your submission has been uploaded successfully!");
     }
-    setIsSubmitting(false);
   };
 
   const downloadQuestionPaper = () => {
     // Simulate download
     toast.success("Question paper download started");
   };
+
+  if (isDataLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   if (isSubmitted) {
     return (
@@ -178,7 +205,7 @@ export default function StudentSubmissionPage() {
               <div>
                 <CardTitle className="text-xl">{assignment?.name}</CardTitle>
                 <CardDescription className="flex items-center space-x-3 mt-2">
-                  <span className="inline-block px-2 py-1 text-xs font-semibold bg-gray-200 text-gray-700 rounded">
+                  <span className="capitalize inline-block px-2 py-1 text-xs font-semibold bg-gray-200 text-gray-700 rounded">
                     {assignment?.subject}
                   </span>
                   <span>{assignment?.className}</span>
