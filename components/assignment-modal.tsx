@@ -38,7 +38,7 @@ export function AssignmentModal({
   generatedUrl,
   isLoading,
 }: AssignmentModalProps) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<any>({
     id: "",
     subject: "mathematics",
     name: "",
@@ -56,7 +56,7 @@ export function AssignmentModal({
         subject: editingAssignment.subject?.toLocaleLowerCase(),
         name: editingAssignment.name,
         className: editingAssignment.className,
-        level: editingAssignment.level || "",
+        // level: editingAssignment.level || "",
         description: editingAssignment.description || "",
         questionPaper: null,
         answerKey: null,
@@ -90,7 +90,7 @@ export function AssignmentModal({
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) {
-        setFormData((prev) => ({ ...prev, [type]: file }));
+        setFormData((prev: any) => ({ ...prev, [type]: file }));
         toast.success(
           `${
             type === "questionPaper" ? "Question paper" : "Answer key"
@@ -104,10 +104,11 @@ export function AssignmentModal({
     toast.success("Submission URL copied to clipboard!");
   };
 
-  const isFormValid =
-    formData.name.trim() !== "" && editingAssignment
-      ? true
-      : formData.questionPaper !== null;
+  const isFormValid = true;
+
+    // formData.name.trim() !== "" && editingAssignment
+    //   ? true
+    //   : formData.questionPaper !== null;
 
   if (generatedUrl) {
     return (
@@ -196,14 +197,14 @@ export function AssignmentModal({
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
-                    className: e.target.value,
+                    className: e.target.value?.toLocaleUpperCase(),
                   }))
                 }
                 placeholder="e.g., Grade 10A"
               />
             </div>
 
-            <div className="grid gap-2">
+            {/* <div className="grid gap-2">
               <Label htmlFor="level">Level</Label>
               <Input
                 id="level"
@@ -213,7 +214,7 @@ export function AssignmentModal({
                 }
                 placeholder="e.g., Beginner, Intermediate, Advanced"
               />
-            </div>
+            </div> */}
 
             <div className="grid gap-2">
               <Label htmlFor="description">Description (Optional)</Label>
@@ -234,7 +235,7 @@ export function AssignmentModal({
             {/* File Uploads */}
             <div className="space-y-4">
               <div className="grid gap-2">
-                <Label>Question Paper {editingAssignment ? "" : "*"}</Label>
+                <Label>Question Paper</Label>
                 <div className="flex items-center space-x-2">
                   <Button
                     type="button"

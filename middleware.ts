@@ -10,8 +10,8 @@ export function middleware(req: NextRequest) {
   const publicPaths = ["/", "/login", "/signup"];
 
   if (publicPaths.includes(pathname)) {
-    if (token && (pathname === "/login" || pathname === "/signup")) {
-      return NextResponse.redirect(new URL("/", req.url));
+    if (token && (pathname === "/login" || pathname === "/signup" || "/")) {
+      return NextResponse.redirect(new URL("/teacher/assignments", req.url));
     }
     return NextResponse.next();
   }

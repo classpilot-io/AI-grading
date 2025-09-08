@@ -144,6 +144,7 @@ export default function TeacherLayout({
                   <li
                     key={item.name}
                     onClick={(e) => {
+                      if (item?.name == "Assignments") return;
                       onShowInfo(e);
                     }}
                   >
@@ -155,7 +156,10 @@ export default function TeacherLayout({
                           ? "bg-blue-50 text-blue-700"
                           : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                       )}
-                      style={{ pointerEvents: "none" }}
+                      style={{
+                        pointerEvents:
+                          item?.name == "Assignments" ? "auto" : "none",
+                      }}
                     >
                       <Icon className="h-5 w-5" />
                       <span>{item.name}</span>
@@ -191,7 +195,7 @@ export default function TeacherLayout({
             <Menu className="h-5 w-5" />
           </Button>
           <div className="flex flex-1 justify-between">
-            <h1 className="text-sm sm:text-xl  font-semibold text-gray-900 align-middle mt-[6px]" >
+            <h1 className="text-sm sm:text-xl  font-semibold text-gray-900 align-middle mt-[6px]">
               Teacher Dashboard
             </h1>
             <div className="flex items-center space-x-2">

@@ -53,14 +53,13 @@ model Assignment {
   subject        SubjectType
   name           String
   className      String
-  level          String
+  level          String?
   description    String?
   questionPaperPath   String?      
   answerKeyPath  String?      
   submissionLink String       @unique
 
   submissions    Submission[]
-  questions      Question[]
   classSummaries ClassSummary[]
 
   createdAt DateTime @default(now())
@@ -82,38 +81,11 @@ model Submission {
   summary           String?
   gradedAt          DateTime?
 
-  results   SubmissionResult[]
+  results   Json?      // Detailed results from grading
   createdAt DateTime @default(now())
 
   @@index([assignmentId])
   @@index([studentId])
-}
-
-model Question {
-  id           String     @id @default(uuid())
-  assignmentId String
-  assignment   Assignment @relation(fields: [assignmentId], references: [id])
-  results      SubmissionResult[]
-
-  createdAt DateTime @default(now())
-
-  @@index([assignmentId])
-}
-
-model SubmissionResult {
-  id            String     @id @default(uuid())
-  submissionId  String
-  submission    Submission @relation(fields: [submissionId], references: [id])
-  questionId    String
-  question      Question   @relation(fields: [questionId], references: [id])
-  scoreEarned   Float
-  scorePossible Float
-  rationale     String
-
-  createdAt DateTime @default(now())
-
-  @@index([submissionId])
-  @@index([questionId])
 }
 
 model ClassSummary {
