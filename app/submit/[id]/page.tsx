@@ -285,12 +285,12 @@ export default function StudentSubmissionPage() {
                   <Input
                     id="files"
                     type="file"
-                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                    accept=".pdf,.jpg,.jpeg,.png"
                     onChange={handleFileUpload}
                     className="cursor-pointer"
                   />
                   <p className="text-xs text-gray-500">
-                    Accepted formats: PDF, DOC, DOCX, JPG, PNG
+                    Accepted formats: PDF, JPG, PNG
                   </p>
                 </div>
 
