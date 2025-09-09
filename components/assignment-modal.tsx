@@ -275,7 +275,7 @@ export function AssignmentModal({
                 <input
                   id="questionPaper"
                   type="file"
-                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  accept=".pdf,.jpg,.jpeg,.png"
                   onChange={handleFileUpload("questionPaper")}
                   className="hidden"
                   required={!editingAssignment}
@@ -331,7 +331,7 @@ export function AssignmentModal({
                 <input
                   id="answerKey"
                   type="file"
-                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  accept=".pdf,.jpg,.jpeg,.png"
                   onChange={handleFileUpload("answerKey")}
                   className="hidden"
                 />

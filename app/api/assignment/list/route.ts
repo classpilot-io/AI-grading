@@ -22,8 +22,8 @@ export async function GET(req: Request) {
     const { data: assignmentData, error: assignmentFetchError } = await supabase
       .from("Assignment")
       .select("*")
-      .eq("teacherId", teacherId);
-      // .order("created_at", { ascending: false });
+      .eq("teacherId", teacherId)
+      .order("createdAt", { ascending: false });
 
     if (assignmentFetchError) {
       return generateErrorResponse(
