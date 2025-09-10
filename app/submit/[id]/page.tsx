@@ -19,6 +19,7 @@ import {
   CheckCircle,
   AlertCircle,
   Badge,
+  Info,
 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
@@ -47,6 +48,7 @@ export default function StudentSubmissionPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [questionsPaperUrl, setQuestionsPaperUrl] = useState<any>("");
+  const [isDownloading, setIsDownloading] = useState(false); // <-- Add this state
 
   const [isDataLoading, setIsDataLoading] = useState(false);
 
@@ -125,10 +127,67 @@ export default function StudentSubmissionPage() {
     }
   };
 
-  const downloadQuestionPaper = () => {
-    // Simulate download
-    toast.success("Question paper download started");
+  // Download question paper with fetch and force download
+  const downloadQuestionPaper = async () => {
+    if (!questionsPaperUrl) {
+      toast.error("No question paper available.");
+      return;
+    }
+    setIsDownloading(true);
+    try {
+      const response = await fetch(questionsPaperUrl, {
+        method: "GET",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to download file.");
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      // Try to get filename from URL or fallback
+      const filename =
+        questionsPaperUrl.split("/").pop() || "question-paper.pdf";
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Question paper downloaded!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to download question paper.");
+    } finally {
+      setIsDownloading(false);
+    }
   };
+
+  // Show info box for teachers
+  if (user?.role === "teacher") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4">
+        <Card className="w-full max-w-md text-center bg-white/90 backdrop-blur-sm shadow-xl border border-blue-200">
+          <CardContent className="pt-8 pb-8">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
+              <Info className="h-8 w-8 text-blue-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              For Students Only
+            </h2>
+            <p className="text-gray-600 mb-6">
+              This page is intended for student assignment submissions.
+              <br />
+              Please use the teacher dashboard to manage assignments.
+            </p>
+            <Link href="/teacher/assignments">
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6">
+                Go to Home
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (isDataLoading) {
     return (
@@ -253,17 +312,24 @@ export default function StudentSubmissionPage() {
                 </p>
               </div>
 
-              <a
-                className="mt-6 w-full"
-                href={questionsPaperUrl}
-                target="_blank"
-                rel="noopener noreferrer"
+              <Button
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 mt-6 flex items-center justify-center"
+                onClick={downloadQuestionPaper}
+                disabled={isDownloading}
+                type="button"
               >
-                <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 mt-6">
-                  <Download className="mr-2 h-4 w-4 transition-transform duration-300 group-hover:translate-y-0.5" />
-                  Download Question Paper
-                </Button>
-              </a>
+                {isDownloading ? (
+                  <>
+                    <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
+                    Downloading...
+                  </>
+                ) : (
+                  <>
+                    <Download className="mr-2 h-4 w-4 transition-transform duration-300 group-hover:translate-y-0.5" />
+                    Download Question Paper
+                  </>
+                )}
+              </Button>
             </CardContent>
           </Card>
 

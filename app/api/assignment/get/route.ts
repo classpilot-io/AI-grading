@@ -31,9 +31,17 @@ export async function GET(req: Request) {
 
     const { data: assignmentData, error: assignmentFetchError } = await supabase
       .from("Assignment")
-      .select("*")
+      .select(`
+    *,
+    classSummaries:ClassSummary (
+      id,
+      metrics,
+      createdAt
+    )
+  `)
       .eq("id", assignmentId)
       .maybeSingle();
+
 
     if (assignmentFetchError) {
       return generateErrorResponse(

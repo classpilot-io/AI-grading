@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Plus, BookOpen, Users, Calendar, MoreVertical } from "lucide-react";
+import { Plus, BookOpen, Users, Calendar, MoreVertical, Trash2 } from "lucide-react";
 import { AssignmentModal } from "@/components/assignment-modal";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -21,61 +21,63 @@ import {
 import Link from "next/link";
 import { GetFetcher, PostFetcher } from "@/lib/helpers";
 import { toast } from "sonner";
-import { GET } from "@/app/api/assignment/get/route";
 import useUserStore from "@/store/userStore";
-import { get } from "node:http";
 
-// // Mock data
-// const mockAssignments = [
-//   {
-//     id: "1",
-//     name: "Algebra Fundamentals Quiz",
-//     className: "Grade 10A",
-//     subject: "Mathematics",
-//     description: "Basic algebra concepts and problem solving",
-//     submissionCount: 12,
-//     totalStudents: 15,
-//     createdAt: "2024-01-15",
-//     questionPaper: "algebra-quiz.pdf",
-//     answerKey: "algebra-answers.pdf",
-//   },
-//   {
-//     id: "2",
-//     name: "Essay on Climate Change",
-//     className: "Grade 9B",
-//     subject: "English",
-//     description: "Write a 500-word essay on climate change impacts",
-//     submissionCount: 8,
-//     totalStudents: 12,
-//     createdAt: "2024-01-14",
-//     questionPaper: null,
-//     answerKey: "essay-rubric.pdf",
-//   },
-//   {
-//     id: "3",
-//     name: "Geometry Problem Set",
-//     className: "Grade 11C",
-//     subject: "Mathematics",
-//     description: "Advanced geometry problems focusing on triangles and circles",
-//     submissionCount: 20,
-//     totalStudents: 22,
-//     createdAt: "2024-01-13",
-//     questionPaper: "geometry-problems.pdf",
-//     answerKey: "geometry-solutions.pdf",
-//   },
-// ];
+// Confirmation Modal (simple implementation)
+function ConfirmModal({ open, onConfirm, onCancel, loading }: { open: boolean, onConfirm: () => void, onCancel: () => void, loading?: boolean }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+      <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
+        <div className="flex flex-col items-center">
+          <Trash2 className="h-10 w-10 text-red-500 mb-2" />
+          <h2 className="text-lg font-bold mb-2 text-gray-900">Delete Assignment?</h2>
+          <p className="text-gray-600 text-center mb-6">
+            Are you sure you want to delete this assignment? This action cannot be undone.
+          </p>
+          <div className="flex gap-3 w-full">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={onCancel}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+              onClick={onConfirm}
+              disabled={loading}
+            >
+              {loading ? (
+                <span className="flex items-center">
+                  <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
+                  Deleting...
+                </span>
+              ) : (
+                "Delete"
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function AssignmentsPage() {
   const user = useUserStore((state: any) => state.user);
   const [assignments, setAssignments] = useState<any>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState<any>(null);
-  const [generatedUrl, setGeneratedUrl] = useState<string | undefined>(
-    undefined
-  );
+  const [generatedUrl, setGeneratedUrl] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
-
   const [isAssignmentLoading, setIsAssignmentLoading] = useState(false);
+
+  // Delete modal state
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [assignmentToDelete, setAssignmentToDelete] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const getAllAssignments = async () => {
     setIsAssignmentLoading(true);
@@ -130,7 +132,6 @@ export default function AssignmentsPage() {
     const updatedAssignment: any = assignments?.find(
       (a: any) => a.id === assignmentData.id
     );
-    console.log("assignment data updated: ", updatedAssignment);
     const formData = new FormData();
     Object.entries(assignmentData).forEach(([key, value]: any) => {
       formData.append(key, value);
@@ -162,16 +163,42 @@ export default function AssignmentsPage() {
     setIsModalOpen(true);
   };
 
+  const openDeleteModal = (assignment: any) => {
+    setAssignmentToDelete(assignment);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteAssignment = async () => {
+    if (!assignmentToDelete) return;
+    setIsDeleting(true);
+    try {
+      const res: any = await PostFetcher(
+        "/assignment/delete",
+        { assignmentId: assignmentToDelete.id },
+        "DELETE"
+      );
+      if (res?.hasError) {
+        toast.error(
+          res?.errors?.[0] || "Failed to delete assignment. Please try again."
+        );
+      } else {
+        setAssignments(assignments.filter((a: any) => a.id !== assignmentToDelete.id));
+        toast.success("Assignment deleted successfully!");
+      }
+    } catch (err: any) {
+      toast.error("Failed to delete assignment.");
+    } finally {
+      setIsDeleting(false);
+      setDeleteModalOpen(false);
+      setAssignmentToDelete(null);
+    }
+  };
+
   const getProgressColor = (submitted: number, total: number) => {
     const percentage = (submitted / total) * 100;
     if (percentage >= 80) return "text-emerald-600";
     if (percentage >= 50) return "text-orange-600";
     return "text-red-600";
-  };
-
-  const onShowInfo = (e: any) => {
-    e.preventDefault();
-    toast.info("Feature coming soon!");
   };
 
   if (!user?.userId || isAssignmentLoading) {
@@ -209,132 +236,126 @@ export default function AssignmentsPage() {
         {assignments?.map((assignment: any, index: any) => (
           <Card
             key={assignment.id}
-            className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border-0 bg-white/80 backdrop-blur-sm"
+            className="group flex flex-col hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 rounded-2xl border border-gray-200 bg-white/90 backdrop-blur-md"
             style={{
               animationDelay: `${index * 100}ms`,
               animation: "fadeInUp 0.6s ease-out forwards",
             }}
           >
-            <CardHeader className="pb-3">
+            {/* Header */}
+            <CardHeader className="pb-4">
               <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-2 capitalize">
+                <div className="flex-1 pr-2">
+                  <div className="flex items-center space-x-2 mb-3 capitalize">
                     <Badge
                       variant={
                         assignment.subject === "mathematics"
                           ? "default"
                           : "secondary"
                       }
-                      className={
+                      className={`px-2 py-1 text-xs font-medium rounded-full transition-colors duration-200 ${
                         assignment.subject === "mathematics"
                           ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
                           : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-                      }
+                      }`}
                     >
                       {assignment.subject}
                     </Badge>
                   </div>
                   <CardTitle
-                    className="text-lg leading-tight group-hover:text-blue-600 transition-colors cursor-pointer"
+                    className="text-xl font-semibold leading-snug group-hover:text-blue-600 transition-colors cursor-pointer"
                     onClick={() => openEditModal(assignment)}
                   >
                     {assignment.name}
                   </CardTitle>
-                  <CardDescription className="mt-1">
+                  <CardDescription className="mt-1 text-sm text-gray-500">
                     {assignment.className}
                   </CardDescription>
                 </div>
+
+                {/* Menu */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <MoreVertical className="h-4 w-4" />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="rounded-full hover:bg-gray-100"
+                    >
+                      <MoreVertical className="h-5 w-5 text-gray-600" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent align="end" className="w-44">
                     <DropdownMenuItem onClick={() => openEditModal(assignment)}>
-                      Edit Assignment
+                      ✏️ Edit Assignment
                     </DropdownMenuItem>
                     <Link
                       href={`/teacher/assignments/${assignment.id}/dashboard`}
-                      // style={{ pointerEvents: "none" }}
                     >
-                      <DropdownMenuItem
-                      // onClick={(e) => {
-                      //   onShowInfo(e);
-                      // }}
-                      >
-                        View Dashboard
-                      </DropdownMenuItem>
+                      <DropdownMenuItem>📊 View Dashboard</DropdownMenuItem>
                     </Link>
                     <DropdownMenuItem
                       className="text-red-600"
-                      onClick={(e) => {
-                        onShowInfo(e);
-                      }}
+                      onClick={() => openDeleteModal(assignment)}
                     >
-                      Delete Assignment
+                      🗑️ Delete Assignment
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
+
+            {/* Main Content */}
+            <CardContent className="flex flex-col flex-1">
+              <div className="space-y-4 flex-1">
+                {/* Description */}
                 {assignment.description && (
-                  <p className="text-sm text-gray-600 line-clamp-2">
+                  <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed">
                     {assignment.description}
                   </p>
                 )}
 
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center space-x-1 text-gray-500">
-                    {/* <Users className="h-4 w-4" />
-                    <span
-                      className={getProgressColor(
-                        assignment.submissionCount,
-                        assignment.totalStudents
-                      )}
-                    >
-                      {assignment.submissionCount}/{assignment.totalStudents}{" "}
-                      submitted
-                    </span> */}
-                  </div>
-                  <div className="flex items-center space-x-1 text-gray-500">
-                    <Calendar className="h-4 w-4" />
+                {/* Date */}
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <div className="flex items-center space-x-1">
+                    <Calendar className="h-4 w-4 text-gray-400" />
                     <span>
                       {new Date(assignment.createdAt).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
 
+                {/* File tags */}
                 <div className="flex flex-wrap gap-2">
                   {assignment.questionPaper && (
-                    <Badge variant="outline" className="text-xs">
-                      Question Paper
+                    <Badge
+                      variant="outline"
+                      className="text-xs px-2 py-1 border-blue-200 text-blue-600"
+                    >
+                      📄 Question Paper
                     </Badge>
                   )}
                   {assignment.answerKey && (
-                    <Badge variant="outline" className="text-xs">
+                    <Badge
+                      variant="outline"
+                      className="text-xs px-2 py-1 border-green-200 text-green-600"
+                    >
                       Answer Key
                     </Badge>
                   )}
                 </div>
+              </div>
 
-                <div
-                  className="pt-2 border-t"
-                  // onClick={(e) => {
-                  //   onShowInfo(e);
-                  // }}
-                >
-                  <Link
-                    href={`/teacher/assignments/${assignment.id}/dashboard`}
-                    // style={{ pointerEvents: "none" }}
+              {/* Footer (always at bottom) */}
+              <div className="pt-3 border-t mt-auto">
+                <Link href={`/teacher/assignments/${assignment.id}/dashboard`}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full rounded-lg font-medium hover:bg-blue-50 hover:text-blue-700"
                   >
-                    <Button variant="outline" size="sm" className="w-full">
-                      View Dashboard
-                    </Button>
-                  </Link>
-                </div>
+                    View Dashboard
+                  </Button>
+                </Link>
               </div>
             </CardContent>
           </Card>
@@ -376,6 +397,17 @@ export default function AssignmentsPage() {
         editingAssignment={editingAssignment}
         generatedUrl={generatedUrl}
         isLoading={isLoading}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        open={deleteModalOpen}
+        onConfirm={handleDeleteAssignment}
+        onCancel={() => {
+          setDeleteModalOpen(false);
+          setAssignmentToDelete(null);
+        }}
+        loading={isDeleting}
       />
 
       <style jsx>{`

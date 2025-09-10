@@ -15,7 +15,15 @@ import { ArrowLeft, Users, TrendingUp, Download, Eye } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
-import { GetFetcher } from "@/lib/helpers";
+import { GetFetcher, PostFetcher } from "@/lib/helpers";
+import ReactMarkdown from "react-markdown";
+import { Loader2, AlertTriangle } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Mock data for submissions
 const mockSubmissions = [
@@ -139,6 +147,7 @@ export default function AssignmentDashboardClient() {
   const [generating, setGenerating] = useState(false);
   const [assignment, setAssignment] = useState<any>({});
   const [isDataLoading, setIsDataLoading] = useState(false);
+  const [isSummaryGenerated, setIsSummaryGenerated] = useState(false);
 
   const getAssignment = async () => {
     try {
@@ -150,6 +159,10 @@ export default function AssignmentDashboardClient() {
         return;
       }
       setAssignment(res?.assignment);
+      setClassSummary({
+        markdown:
+          res?.assignment?.classSummaries?.[0]?.metrics?.summary || null,
+      });
     } catch (error) {
       console.error("Error fetching assignment:", error);
       toast.error("Something went wrong while fetching assignment.");
@@ -189,29 +202,26 @@ export default function AssignmentDashboardClient() {
     fetchData();
   }, []);
 
-  const generateClassSummary = async () => {
+  const fetchAndShowClassSummary = async () => {
     setGenerating(true);
-    // Simulate API call
-    setTimeout(() => {
-      const scores = submissions.map((s) => s.score);
-      const average = scores.reduce((a, b) => a + b, 0) / scores.length;
-      const median = scores.sort((a, b) => a - b)[
-        Math.floor(scores.length / 2)
-      ];
-
-      setClassSummary({
-        totalSubmissions: submissions.length,
-        averageScore: average,
-        medianScore: median,
-        distribution: {
-          excellent: scores.filter((s) => s >= 90).length,
-          good: scores.filter((s) => s >= 80 && s < 90).length,
-          average: scores.filter((s) => s >= 70 && s < 80).length,
-          needsImprovement: scores.filter((s) => s < 70).length,
-        },
-      });
+    setClassSummary(null);
+    try {
+      const data = await PostFetcher<{
+        summary: string;
+        classSummaryId: string;
+      }>("/assignment/class-summary", { assignmentId: params?.id });
+      if (!data?.summary) {
+        toast.error("Failed to generate class summary. Please try again.");
+        setGenerating(false);
+        return;
+      }
+      setClassSummary({ markdown: data.summary });
+      setIsSummaryGenerated(true);
+    } catch (err: any) {
+      toast.error("Something went wrong while generating summary.");
+    } finally {
       setGenerating(false);
-    }, 1500);
+    }
   };
 
   const getScoreColor = (score: number, total: number) => {
@@ -246,6 +256,11 @@ export default function AssignmentDashboardClient() {
         return "secondary";
     }
   };
+
+  // Check if at least one submission is graded
+  const hasGradedSubmission = submissions?.some(
+    (s: any) => s.status === "graded"
+  );
 
   if (isDataLoading) {
     return (
@@ -288,17 +303,42 @@ export default function AssignmentDashboardClient() {
               </span>
             </div>
           </div>
-          <Button
-            // style={{ pointerEvents: "none" }}
-            onClick={(e) => {
-              onShowInfo(e);
-            }}
-            disabled={generating}
-            className="mt-4 sm:mt-0 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
-          >
-            <TrendingUp className="h-4 w-4 mr-2" />
-            {generating ? "Generating..." : "Generate Class Summary"}
-          </Button>
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button
+                    onClick={fetchAndShowClassSummary}
+                    disabled={
+                      generating ||
+                      isSummaryGenerated ||
+                      !hasGradedSubmission
+                    }
+                    className="mt-4 sm:mt-0 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
+                  >
+                    {generating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <TrendingUp className="h-4 w-4 mr-2" />
+                        Generate Class Summary
+                      </>
+                    )}
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {!hasGradedSubmission
+                  ? "At least one graded student submission is required to generate a class summary."
+                  : isSummaryGenerated
+                  ? "Class summary already generated"
+                  : "Generate a concise summary of class performance"}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 
@@ -357,7 +397,7 @@ export default function AssignmentDashboardClient() {
       </div>
 
       {/* Class Summary */}
-      {classSummary && (
+      {classSummary?.markdown && (
         <Card className="mb-8 bg-gradient-to-r from-gray-50 to-slate-50">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
@@ -366,47 +406,8 @@ export default function AssignmentDashboardClient() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <div className="text-center p-4 rounded-lg bg-emerald-100">
-                <div className="text-2xl font-bold text-emerald-700">
-                  {classSummary.distribution.excellent}
-                </div>
-                <div className="text-sm text-emerald-600">Excellent (90%+)</div>
-              </div>
-              <div className="text-center p-4 rounded-lg bg-blue-100">
-                <div className="text-2xl font-bold text-blue-700">
-                  {classSummary.distribution.good}
-                </div>
-                <div className="text-sm text-blue-600">Good (80-89%)</div>
-              </div>
-              <div className="text-center p-4 rounded-lg bg-orange-100">
-                <div className="text-2xl font-bold text-orange-700">
-                  {classSummary.distribution.average}
-                </div>
-                <div className="text-sm text-orange-600">Average (70-79%)</div>
-              </div>
-              <div className="text-center p-4 rounded-lg bg-red-100">
-                <div className="text-2xl font-bold text-red-700">
-                  {classSummary.distribution.needsImprovement}
-                </div>
-                <div className="text-sm text-red-600">Needs Work (&lt;70%)</div>
-              </div>
-            </div>
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <div className="flex space-x-8 text-sm">
-                <div>
-                  <span className="text-gray-500">Average Score:</span>
-                  <span className="ml-2 font-semibold">
-                    {Math.round(classSummary.averageScore)}%
-                  </span>
-                </div>
-                <div>
-                  <span className="text-gray-500">Median Score:</span>
-                  <span className="ml-2 font-semibold">
-                    {classSummary.medianScore}%
-                  </span>
-                </div>
-              </div>
+            <div className="prose max-w-none text-gray-800 text-base sm:text-lg">
+              <ReactMarkdown>{classSummary.markdown}</ReactMarkdown>
             </div>
           </CardContent>
         </Card>
@@ -438,8 +439,7 @@ export default function AssignmentDashboardClient() {
             <div className="space-y-3">
               {submissions?.map((submission: any, index: any) => {
                 // Check the status to decide if the submission is clickable
-                // const isClickable = submission.status === "graded";
-                const isClickable = false;
+                const isClickable = submission.status === "graded";
 
                 // Define common styling for the submission card
                 const cardStyle = {
@@ -452,7 +452,7 @@ export default function AssignmentDashboardClient() {
                     className={`flex flex-col md:flex-row md:items-center md:justify-between p-4 rounded-lg border border-gray-200 transition-all duration-200 ${
                       isClickable
                         ? "hover:border-blue-300 hover:shadow-md cursor-pointer group"
-                        : " opacity-70"
+                        : "cursor-not-allowed opacity-70"
                     }`}
                     style={cardStyle}
                   >

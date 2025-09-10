@@ -66,9 +66,13 @@ export default function LoginPage() {
           secure: true,
         });
         (useUserStore?.getState() as any)?.setUser(res?.user);
-        setTimeout(() => {
-          window.location.reload();
-        }, 100);
+        if (formData?.role) {
+          window.location.href = "/student";
+        } else {
+          setTimeout(() => {
+            window.location.reload();
+          }, 100);
+        }
       } else {
         setError("Login failed. No access token returned.");
       }
