@@ -198,12 +198,12 @@ export default function SubmissionView() {
             <div className="flex items-center space-x-1 text-sm text-gray-600">
               <Calendar className="h-4 w-4" />
               <span>
-                Submitted:{" "}
-                {new Date(submission.gradedAt).toLocaleDateString("en-GB")} at{" "}
+                Submitted:{" "}{new Date(submission.gradedAt).toLocaleDateString()}
+                {/* {new Date(submission.gradedAt).toLocaleDateString("en-GB")} at{" "}
                 {new Date(submission.gradedAt).toLocaleTimeString("en-GB", {
                   hour: "2-digit",
                   minute: "2-digit",
-                })}
+                })} */}
               </span>
             </div>
           </CardContent>

@@ -397,7 +397,7 @@ export default function AssignmentDashboardClient() {
       </div>
 
       {/* Class Summary */}
-      {classSummary && (
+      {classSummary?.markdown && (
         <Card className="mb-8 bg-gradient-to-r from-gray-50 to-slate-50">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">

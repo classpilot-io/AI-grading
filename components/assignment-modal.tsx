@@ -77,10 +77,10 @@ export function AssignmentModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!editingAssignment && !formData.questionPaper) {
-      toast.error("Please upload a question paper before submitting");
-      return;
-    }
+    // if (!editingAssignment && !formData.questionPaper) {
+    //   toast.error("Please upload a question paper before submitting");
+    //   return;
+    // }
 
     onSubmit({ ...formData });
   };
@@ -104,7 +104,7 @@ export function AssignmentModal({
     toast.success("Submission URL copied to clipboard!");
   };
 
-  const isFormValid = true;
+  // const isFormValid = true;
 
     // formData.name.trim() !== "" && editingAssignment
     //   ? true
@@ -190,7 +190,7 @@ export function AssignmentModal({
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="className">Class Name</Label>
+              <Label htmlFor="className">Class Name *</Label>
               <Input
                 id="className"
                 value={formData.className}
@@ -201,6 +201,7 @@ export function AssignmentModal({
                   }))
                 }
                 placeholder="e.g., Grade 10A"
+                required
               />
             </div>
 
@@ -235,7 +236,7 @@ export function AssignmentModal({
             {/* File Uploads */}
             <div className="space-y-4">
               <div className="grid gap-2">
-                <Label>Question Paper</Label>
+                <Label>Question Paper (Optional)</Label>
                 <div className="flex items-center space-x-2">
                   <Button
                     type="button"
@@ -278,7 +279,6 @@ export function AssignmentModal({
                   accept=".pdf,.jpg,.jpeg,.png"
                   onChange={handleFileUpload("questionPaper")}
                   className="hidden"
-                  required={!editingAssignment}
                 />
                 {formData.questionPaper && (
                   <div className="flex items-center space-x-2 text-sm text-gray-600 max-w-full">
@@ -353,7 +353,7 @@ export function AssignmentModal({
           <div className="flex space-x-3 pt-4">
             <Button
               type="submit"
-              disabled={!isFormValid || isLoading}
+              disabled={isLoading}
               className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50"
             >
               {isLoading
