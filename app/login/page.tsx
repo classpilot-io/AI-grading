@@ -66,13 +66,13 @@ export default function LoginPage() {
           secure: true,
         });
         (useUserStore?.getState() as any)?.setUser(res?.user);
-        if (formData?.role) {
-          window.location.href = "/student";
-        } else {
+        // if (formData?.role) {
+        //   window.location.href = "/student";
+        // } else {
           setTimeout(() => {
             window.location.reload();
           }, 100);
-        }
+        // }
       } else {
         setError("Login failed. No access token returned.");
       }
@@ -99,7 +99,7 @@ export default function LoginPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Role Dropdown */}
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Role
               </label>
@@ -129,7 +129,7 @@ export default function LoginPage() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
+            </div> */}
 
             {/* Email Input */}
             <div className="relative">

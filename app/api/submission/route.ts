@@ -3,20 +3,12 @@ import {
   generateErrorResponse,
   generateResultResponse,
 } from "@/lib/responseUtils";
-import { requireRole } from "@/authUtils";
+import { createServerSupabaseClient } from "@/services/supabase/server";
 import { randomUUID } from "crypto";
 import { sanitizeFileName } from "@/lib/helpers";
 
 export async function POST(req: Request) {
-  const { user, supabase, error } = await requireRole(req, ["student"]);
-
-  if (error || !user) {
-    return generateErrorResponse(
-      "Unauthorized",
-      HTTP_STATUS_CODES.HTTP_UNAUTHORIZED
-    );
-  }
-
+  const supabase = createServerSupabaseClient();
   try {
     const formData = await req.formData();
 
@@ -56,14 +48,12 @@ export async function POST(req: Request) {
     const answerKeyPath = assignmentData?.answerKeyPath;
     const submissionType = assignmentData?.subject;
 
-    const studentId = user.id;
-
     // Check for an existing submission from this student for this assignment
     const { data: existingSubmission } = await supabase
       .from("Submission")
       .select("id")
       .eq("assignmentId", assignmentId)
-      .eq("studentId", studentId)
+      .eq("studentIdentifier", studentIdentifier)
       .maybeSingle();
 
     let submissionId: string;
@@ -81,7 +71,7 @@ export async function POST(req: Request) {
     const safeFileName = sanitizeFileName(answerFile.name);
 
     // Upload the file to Supabase Storage, using the same path for overwriting
-    const filePath = `submissions/${assignmentId}/${studentId}/${safeFileName}`;
+    const filePath = `submissions/${assignmentId}/${studentIdentifier}/${safeFileName}`;
     const { error: answerUploadError } = await supabase.storage
       .from("files")
       .upload(filePath, answerFile, { upsert: true });
@@ -102,7 +92,6 @@ export async function POST(req: Request) {
 
     const submissionData = {
       assignmentId,
-      studentId,
       studentIdentifier,
       submissionFilePath: submissionFileUrl,
       status: "pending",

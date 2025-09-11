@@ -96,7 +96,7 @@ export default function SignupPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Role Dropdown */}
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Role
               </label>
@@ -126,7 +126,7 @@ export default function SignupPage() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
+            </div> */}
 
             {/* Name */}
             <div className="relative">

@@ -464,7 +464,7 @@ export default function AssignmentDashboardClient() {
                             isClickable ? "group-hover:text-blue-600" : ""
                           }`}
                         >
-                          {submission?.User?.name}
+                          {submission?.studentIdentifier}
                         </div>
                         <Badge
                           className={`mt-1 md:mt-0 md:ml-auto w-fit capitalize ${
@@ -481,10 +481,10 @@ export default function AssignmentDashboardClient() {
                         </Badge>
                       </div>
                       <div className="flex flex-col md:flex-row md:items-center md:space-x-4 mt-1 text-sm text-gray-500">
-                        <span className="truncate">
-                          {submission?.User?.email}
+                        {/* <span className="truncate">
+                          {submission?.studentIdentifier}
                         </span>
-                        <span className="hidden md:inline">•</span>
+                        <span className="hidden md:inline">•</span> */}
                         <span>
                           {new Date(submission?.gradedAt).toLocaleDateString(
                             "en-GB"

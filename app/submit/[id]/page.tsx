@@ -23,32 +23,19 @@ import {
 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
-import useUserStore from "@/store/userStore";
 import { GetFetcher, PostFetcher } from "@/lib/helpers";
 import Link from "next/link";
 
-// // Mock assignment data
-// const assignment? = {
-//   id: "1",
-//   name: "Algebra Fundamentals Quiz",
-//   className: "Grade 10A",
-//   subject: "Mathematics",
-//   description:
-//     "Basic algebra concepts and problem solving. Please show all your working steps clearly.",
-//   questionPaper: "algebra-quiz.pdf",
-//   hasQuestionPaper: true,
-// };
-
 export default function StudentSubmissionPage() {
   const params = useParams();
-  const user = useUserStore((state: any) => state.user);
   const [assignment, setAssignment] = useState<any>();
 
   const [files, setFiles] = useState<File | any>();
+  const [studentName, setStudentName] = useState(""); // <-- Add state for student name
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [questionsPaperUrl, setQuestionsPaperUrl] = useState<any>("");
-  const [isDownloading, setIsDownloading] = useState(false); // <-- Add this state
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const [isDataLoading, setIsDataLoading] = useState(false);
 
@@ -93,6 +80,11 @@ export default function StudentSubmissionPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!studentName.trim()) {
+      toast.error("Please enter your name");
+      return;
+    }
+
     if (!files) {
       toast.error("Please upload at least one file");
       return;
@@ -104,7 +96,7 @@ export default function StudentSubmissionPage() {
       const formData = new FormData();
       formData.append("answerFile", files as Blob);
       formData.append("assignmentId", params.id as string);
-      formData.append("studentIdentifier", user?.userId);
+      formData.append("studentIdentifier", studentName.trim());
 
       const res: any = await PostFetcher("/submission", formData, "POST");
 
@@ -161,34 +153,6 @@ export default function StudentSubmissionPage() {
     }
   };
 
-  // Show info box for teachers
-  if (user?.role === "teacher") {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4">
-        <Card className="w-full max-w-md text-center bg-white/90 backdrop-blur-sm shadow-xl border border-blue-200">
-          <CardContent className="pt-8 pb-8">
-            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
-              <Info className="h-8 w-8 text-blue-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              For Students Only
-            </h2>
-            <p className="text-gray-600 mb-6">
-              This page is intended for student assignment submissions.
-              <br />
-              Please use the teacher dashboard to manage assignments.
-            </p>
-            <Link href="/teacher/assignments">
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6">
-                Go to Home
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   if (isDataLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -224,13 +188,13 @@ export default function StudentSubmissionPage() {
             </div>
 
             {/* Added Home link */}
-            <div className="mt-8">
+            {/* <div className="mt-8">
               <Link href="/">
                 <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6">
                   Go to Home
                 </Button>
               </Link>
-            </div>
+            </div> */}
           </CardContent>
         </Card>
       </div>
@@ -346,6 +310,19 @@ export default function StudentSubmissionPage() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Student Name Input */}
+                <div className="grid gap-2">
+                  <Label htmlFor="studentName">Your Name</Label>
+                  <Input
+                    id="studentName"
+                    type="text"
+                    value={studentName}
+                    onChange={(e) => setStudentName(e.target.value)}
+                    placeholder="Enter your full name"
+                    required
+                  />
+                </div>
+
                 <div className="grid gap-2">
                   <Label htmlFor="files">Upload Files (PDF or Images)</Label>
                   <Input
@@ -360,30 +337,31 @@ export default function StudentSubmissionPage() {
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Selected File:</Label>
-
-                  <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-2">
-                      <FileText className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-700">
-                        {files?.name}
-                      </span>
+                {files && (
+                  <div className="space-y-2">
+                    <Label>Selected File:</Label>
+                    <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                      <div className="flex items-center space-x-2">
+                        <FileText className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm text-gray-700">
+                          {files?.name}
+                        </span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setFiles(undefined)}
+                      >
+                        ×
+                      </Button>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setFiles(undefined)}
-                    >
-                      ×
-                    </Button>
                   </div>
-                </div>
+                )}
 
                 <Button
                   type="submit"
-                  disabled={!files || isSubmitting}
+                  disabled={!files || !studentName.trim() || isSubmitting}
                   className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
                 >
                   {isSubmitting ? (

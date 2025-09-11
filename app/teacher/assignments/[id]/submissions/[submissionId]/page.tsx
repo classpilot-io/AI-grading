@@ -166,7 +166,7 @@ export default function SubmissionView() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="h-12 w-12 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center text-white font-semibold">
-                  {submission.User?.name
+                  {submission.studentIdentifier
                     ?.split(" ")
                     .map((n: any) => n[0])
                     .join("")}
@@ -175,7 +175,7 @@ export default function SubmissionView() {
                   <CardTitle className="text-lg">
                     {submission.User?.name}
                   </CardTitle>
-                  <CardDescription>{submission.User?.email}</CardDescription>
+                  <CardDescription>{submission?.studentIdentifier}</CardDescription>
                 </div>
               </div>
               <div className="text-right">
