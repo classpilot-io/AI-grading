@@ -310,9 +310,7 @@ export default function AssignmentDashboardClient() {
                   <Button
                     onClick={fetchAndShowClassSummary}
                     disabled={
-                      generating ||
-                      isSummaryGenerated ||
-                      !hasGradedSubmission
+                      generating || isSummaryGenerated || !hasGradedSubmission
                     }
                     className="mt-4 sm:mt-0 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
                   >
@@ -486,9 +484,7 @@ export default function AssignmentDashboardClient() {
                         </span>
                         <span className="hidden md:inline">•</span> */}
                         <span>
-                          {new Date(submission?.gradedAt).toLocaleDateString(
-                            "en-GB"
-                          )}
+                          {new Date(submission?.gradedAt).toLocaleDateString()}
                         </span>
                       </div>
                     </div>

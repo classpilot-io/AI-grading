@@ -175,7 +175,9 @@ export default function SubmissionView() {
                   <CardTitle className="text-lg">
                     {submission.User?.name}
                   </CardTitle>
-                  <CardDescription>{submission?.studentIdentifier}</CardDescription>
+                  <CardDescription>
+                    {submission?.studentIdentifier}
+                  </CardDescription>
                 </div>
               </div>
               <div className="text-right">
@@ -198,12 +200,8 @@ export default function SubmissionView() {
             <div className="flex items-center space-x-1 text-sm text-gray-600">
               <Calendar className="h-4 w-4" />
               <span>
-                Submitted:{" "}{new Date(submission.gradedAt).toLocaleDateString()}
-                {/* {new Date(submission.gradedAt).toLocaleDateString("en-GB")} at{" "}
-                {new Date(submission.gradedAt).toLocaleTimeString("en-GB", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })} */}
+                Submitted:{" "}
+                {new Date(submission.gradedAt).toLocaleDateString()}
               </span>
             </div>
           </CardContent>
@@ -299,7 +297,7 @@ export default function SubmissionView() {
                   <h3 className="text-lg font-semibold text-indigo-700">
                     Breakdown of Marks
                   </h3>
-                  {grade.parts.map((part, partIndex) => (
+                  {grade.parts.map((part: any, partIndex: any) => (
                     <div
                       key={partIndex}
                       className="bg-gray-50 p-4 rounded-lg border border-gray-200"

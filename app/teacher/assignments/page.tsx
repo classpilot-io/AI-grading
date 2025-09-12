@@ -9,7 +9,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Plus, BookOpen, Users, Calendar, MoreVertical, Trash2 } from "lucide-react";
+import {
+  Plus,
+  BookOpen,
+  Users,
+  Calendar,
+  MoreVertical,
+  Trash2,
+} from "lucide-react";
 import { AssignmentModal } from "@/components/assignment-modal";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -24,16 +31,29 @@ import { toast } from "sonner";
 import useUserStore from "@/store/userStore";
 
 // Confirmation Modal (simple implementation)
-function ConfirmModal({ open, onConfirm, onCancel, loading }: { open: boolean, onConfirm: () => void, onCancel: () => void, loading?: boolean }) {
+function ConfirmModal({
+  open,
+  onConfirm,
+  onCancel,
+  loading,
+}: {
+  open: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+  loading?: boolean;
+}) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
       <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
         <div className="flex flex-col items-center">
           <Trash2 className="h-10 w-10 text-red-500 mb-2" />
-          <h2 className="text-lg font-bold mb-2 text-gray-900">Delete Assignment?</h2>
+          <h2 className="text-lg font-bold mb-2 text-gray-900">
+            Delete Assignment?
+          </h2>
           <p className="text-gray-600 text-center mb-6">
-            Are you sure you want to delete this assignment? This action cannot be undone.
+            Are you sure you want to delete this assignment? This action cannot
+            be undone.
           </p>
           <div className="flex gap-3 w-full">
             <Button
@@ -70,7 +90,9 @@ export default function AssignmentsPage() {
   const [assignments, setAssignments] = useState<any>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState<any>(null);
-  const [generatedUrl, setGeneratedUrl] = useState<string | undefined>(undefined);
+  const [generatedUrl, setGeneratedUrl] = useState<string | undefined>(
+    undefined
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [isAssignmentLoading, setIsAssignmentLoading] = useState(false);
 
@@ -182,7 +204,9 @@ export default function AssignmentsPage() {
           res?.errors?.[0] || "Failed to delete assignment. Please try again."
         );
       } else {
-        setAssignments(assignments.filter((a: any) => a.id !== assignmentToDelete.id));
+        setAssignments(
+          assignments.filter((a: any) => a.id !== assignmentToDelete.id)
+        );
         toast.success("Assignment deleted successfully!");
       }
     } catch (err: any) {

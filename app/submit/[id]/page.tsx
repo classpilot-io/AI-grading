@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -23,34 +23,40 @@ import {
 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
-import { GetFetcher, PostFetcher } from "@/lib/helpers";
+import { GetFetcher } from "@/lib/helpers";
 import Link from "next/link";
+import KaTeXComponent from "@/components/kaTexComponent";
+import ReactMarkdown from "react-markdown";
 
 export default function StudentSubmissionPage() {
   const params = useParams();
   const [assignment, setAssignment] = useState<any>();
-
   const [files, setFiles] = useState<File | any>();
-  const [studentName, setStudentName] = useState(""); // <-- Add state for student name
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [studentName, setStudentName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [questionsPaperUrl, setQuestionsPaperUrl] = useState<any>("");
   const [isDownloading, setIsDownloading] = useState(false);
-
   const [isDataLoading, setIsDataLoading] = useState(false);
+
+  // Streaming state
+  const [streamingResult, setStreamingResult] = useState<string>("");
+  const [streamError, setStreamError] = useState<string | null>(null);
+  const [parsedResult, setParsedResult] = useState<any>(null);
+
+  const streamRef = useRef<string>("");
+  const gradingBoxRef = useRef<HTMLDivElement>(null);
+  const streamEndRef = useRef<HTMLDivElement>(null);
 
   const getAssignment = async () => {
     setIsDataLoading(true);
     try {
       const res: any = await GetFetcher(`/assignment/get?id=${params?.id}`);
-
       if (res?.hasError) {
         toast.error(
           res?.errors?.[0] || "Failed to fetch assignment. Please try again."
         );
         return;
       }
-
       setAssignment(res?.assignment);
       setQuestionsPaperUrl(res?.assignment?.questionPaperPath);
     } catch (err: any) {
@@ -73,12 +79,17 @@ export default function StudentSubmissionPage() {
     }
   };
 
-  const removeFile = (index: number) => {
+  const removeFile = () => {
     setFiles(undefined);
   };
 
+  // Streaming submission handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    setStreamError(null);
+    setStreamingResult("");
+    setParsedResult(null);
 
     if (!studentName.trim()) {
       toast.error("Please enter your name");
@@ -92,32 +103,113 @@ export default function StudentSubmissionPage() {
 
     setIsSubmitting(true);
 
+    // Scroll to grading box after submit
+    setTimeout(() => {
+      gradingBoxRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 100);
+
     try {
       const formData = new FormData();
       formData.append("answerFile", files as Blob);
       formData.append("assignmentId", params.id as string);
       formData.append("studentIdentifier", studentName.trim());
 
-      const res: any = await PostFetcher("/submission", formData, "POST");
+      const response = await fetch("/api/submission", {
+        method: "POST",
+        body: formData,
+      });
 
-      if (res?.hasError) {
-        toast.error(
-          res?.errors?.[0] || "Failed to create assignment. Please try again."
-        );
-        return;
+      if (!response.body) {
+        throw new Error("No response stream from server.");
       }
 
-      if (res?.submission) {
-        setIsSubmitted(true);
-        toast.success("Your submission has been uploaded successfully!");
+      // 1. Read the full stream and store it
+      const reader = response.body.getReader();
+      let resultText = "";
+      let done = false;
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        if (value) {
+          const chunk = new TextDecoder().decode(value);
+          resultText += chunk;
+        }
+      }
+
+      // 2. Parse the result as JSON
+      let rawJsonText = resultText.replace(/```json\n?/, "").replace(/\n?```/, "");
+      let gradingResult;
+      try {
+        gradingResult = JSON.parse(rawJsonText);
+        simulateStreamingResult(gradingResult);
+        toast.success("Your submission has been uploaded and graded!");
+      } catch (err) {
+        setStreamError("Failed to parse grading result. Please contact your teacher.");
+        toast.error("Failed to parse grading result. Please contact your teacher.");
+        setIsSubmitting(false);
       }
     } catch (err: any) {
-      console.error("Error while submitting:", err);
-      toast.error(err.message || "Something went wrong. Please try again.");
-    } finally {
+      setStreamError(err.message || "Failed to submit or grade assignment.");
+      toast.error(err.message || "Failed to submit or grade assignment.");
       setIsSubmitting(false);
     }
+    // setIsSubmitting(false) is now handled after streaming finishes (in simulateStreamingResult)
   };
+
+  // Simulate streaming the parsed result as formatted content
+  function simulateStreamingResult(gradingResult: any) {
+    // For mathematics: stream each question one by one
+    if (
+      assignment?.subject?.toLowerCase() === "mathematics" &&
+      gradingResult?.grades
+    ) {
+      let i = 0;
+      const gradesRef = { current: [] as any[] };
+      setParsedResult({ grades: [] });
+
+      const streamNext = () => {
+        gradesRef.current = [...gradesRef.current, gradingResult.grades[i]];
+        setParsedResult({ grades: [...gradesRef.current] });
+        i++;
+        setTimeout(() => {
+          streamEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }, 50);
+        if (i < gradingResult.grades.length) {
+          setTimeout(streamNext, 180); // adjust speed as needed
+        } else {
+          setIsSubmitting(false);
+        }
+      };
+      streamNext();
+    }
+    // For english: stream summary and then feedback line by line
+    else if (assignment?.subject?.toLowerCase() === "english" && gradingResult) {
+      setParsedResult({ ...gradingResult, detailed_feedback: "" });
+      let lines = (gradingResult.detailed_feedback || "")
+        .split("\n")
+        .filter(Boolean);
+      let i = 0;
+      const streamNext = () => {
+        setParsedResult((prev: any) => ({
+          ...gradingResult,
+          detailed_feedback: lines.slice(0, i + 1).join("\n"),
+        }));
+        setTimeout(() => {
+          streamEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }, 50);
+        i++;
+        if (i < lines.length) {
+          setTimeout(streamNext, 400); // adjust speed as needed
+        } else {
+          setIsSubmitting(false);
+        }
+      };
+      setTimeout(streamNext, 600);
+    } else {
+      setParsedResult(gradingResult);
+      setIsSubmitting(false);
+    }
+  }
 
   // Download question paper with fetch and force download
   const downloadQuestionPaper = async () => {
@@ -137,7 +229,6 @@ export default function StudentSubmissionPage() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      // Try to get filename from URL or fallback
       const filename =
         questionsPaperUrl.split("/").pop() || "question-paper.pdf";
       a.download = filename;
@@ -157,46 +248,6 @@ export default function StudentSubmissionPage() {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  if (isSubmitted) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-blue-50 to-indigo-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md text-center bg-white/80 backdrop-blur-sm shadow-xl">
-          <CardContent className="pt-8">
-            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
-              <CheckCircle className="h-8 w-8 text-emerald-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Submission Complete!
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Your work has been uploaded successfully and will be graded
-              automatically.
-            </p>
-            <div className="space-y-3 text-sm text-gray-500">
-              <div className="flex items-center justify-center space-x-2">
-                <FileText className="h-4 w-4" />
-                <span>Solution submitted</span>
-              </div>
-              <div className="flex items-center justify-center space-x-2">
-                <AlertCircle className="h-4 w-4" />
-                <span>Results will be available to your teacher</span>
-              </div>
-            </div>
-
-            {/* Added Home link */}
-            {/* <div className="mt-8">
-              <Link href="/">
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6">
-                  Go to Home
-                </Button>
-              </Link>
-            </div> */}
-          </CardContent>
-        </Card>
       </div>
     );
   }
@@ -245,7 +296,6 @@ export default function StudentSubmissionPage() {
 
         <div className="grid gap-8 md:grid-cols-2">
           {/* Download Section */}
-
           <Card className="w-full max-w-sm  bg-white/70 p-6 backdrop-blur-sm shadow-lg">
             <CardHeader className="flex flex-col items-center border-b border-gray-200 pb-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600 shadow-inner">
@@ -351,7 +401,7 @@ export default function StudentSubmissionPage() {
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={() => setFiles(undefined)}
+                        onClick={removeFile}
                       >
                         ×
                       </Button>
@@ -367,7 +417,7 @@ export default function StudentSubmissionPage() {
                   {isSubmitting ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Uploading...
+                      Uploading & Grading...
                     </>
                   ) : (
                     <>
@@ -380,6 +430,239 @@ export default function StudentSubmissionPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Streaming Result Section */}
+        {(isSubmitting || streamingResult || parsedResult || streamError) && (
+          <div ref={gradingBoxRef}>
+            <Card className="mt-10 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+              <CardHeader>
+                <CardTitle className="text-lg text-blue-900">
+                  {streamError
+                    ? "Error"
+                    : parsedResult
+                    ? "Grading Result"
+                    : "Grading in Progress..."}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {streamError && (
+                  <div className="text-red-600 font-semibold">{streamError}</div>
+                )}
+
+                {/* Live streaming text (show as code block for JSON) */}
+                {!streamError && !parsedResult && (
+                  <pre className="whitespace-pre-wrap text-xs bg-gray-100 p-3 rounded-md max-h-72 overflow-auto border">
+                    {streamingResult}
+                  </pre>
+                )}
+
+                {/* Parsed result rendering (like teacher's view) */}
+                {parsedResult && (
+                  <div>
+                    {/* Mathematics */}
+                    {assignment?.subject?.toLowerCase() === "mathematics" &&
+                      parsedResult?.grades?.map((grade: any, index: any) => (
+                        <Card
+                          key={index}
+                          className="mb-6 p-6 rounded-lg shadow-sm"
+                        >
+                          <div className="flex justify-between items-center mb-4">
+                            {grade?.question_number && (
+                              <h2 className="text-xl font-semibold text-indigo-700">
+                                Question {grade?.question_number}
+                              </h2>
+                            )}
+                            <div className="flex justify-end gap-6 items-center">
+                              {grade?.awarded_marks !== undefined &&
+                                grade?.total_marks !== undefined && (
+                                  <div className="text-lg font-bold text-blue-600">
+                                    {grade?.awarded_marks}/{grade?.total_marks}
+                                  </div>
+                                )}
+                              {grade?.status && (
+                                <span
+                                  className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                                    grade?.status === "Correct"
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-red-100 text-red-800"
+                                  }`}
+                                >
+                                  {grade?.status}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          {grade?.question_text && (
+                            <div className="space-y-4 mb-4">
+                              <div>
+                                <p className="text-sm font-semibold text-indigo-500">
+                                  Question:
+                                </p>
+                                <div className="mt-1 text-base text-gray-900">
+                                  <KaTeXComponent
+                                    mathText={grade?.question_text}
+                                  />
+                                </div>
+                              </div>
+                              {grade?.answer_text && (
+                                <div>
+                                  <p className="text-sm font-semibold text-indigo-500">
+                                    Student's Answer:
+                                  </p>
+                                  <div className="mt-1 text-base text-gray-900">
+                                    <KaTeXComponent
+                                      mathText={grade?.answer_text.replace(
+                                        /\\n/g,
+                                        "\n"
+                                      )}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                              {grade?.correct_answer &&
+                                grade?.correct_answer !== "null" &&
+                                grade?.correct_answer !== null && (
+                                  <div>
+                                    <p className="text-sm font-semibold text-green-600">
+                                      Correct Answer:
+                                    </p>
+                                    <div className="mt-1 text-base text-gray-900">
+                                      <KaTeXComponent
+                                        mathText={grade?.correct_answer}
+                                      />
+                                    </div>
+                                  </div>
+                                )}
+                          </div>
+                        )}
+                        {grade?.parts && grade?.parts.length > 0 && (
+                          <div className="space-y-4 border-t pt-4 mt-4">
+                            <h3 className="text-lg font-semibold text-indigo-700">
+                              Breakdown of Marks
+                            </h3>
+                            {grade?.parts.map((part: any, partIndex: any) => (
+                              <div
+                                key={partIndex}
+                                className="bg-gray-50 p-4 rounded-lg border border-gray-200"
+                              >
+                                <div className="flex justify-between items-center mb-2">
+                                  {part.part_number && (
+                                    <h4 className="text-md font-medium text-indigo-600">
+                                      Part {part.part_number}
+                                    </h4>
+                                  )}
+                                  <div className="flex justify-end gap-6 items-center">
+                                    {part.awarded_marks !== undefined &&
+                                      part.total_marks !== undefined && (
+                                        <div className="text-md font-bold text-blue-600">
+                                          {part.awarded_marks}/
+                                          {part.total_marks}
+                                        </div>
+                                      )}
+                                    {part.status && (
+                                      <span
+                                        className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                                          part.status === "Correct"
+                                            ? "bg-green-100 text-green-800"
+                                            : "bg-red-100 text-red-800"
+                                        }`}
+                                      >
+                                        {part.status}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                {part.question_text && (
+                                  <div>
+                                    <p className="text-sm font-semibold text-indigo-500">
+                                      Question Text:
+                                    </p>
+                                    <div className="mt-1 text-base text-gray-900">
+                                      <KaTeXComponent
+                                        mathText={part.question_text}
+                                      />
+                                    </div>
+                                  </div>
+                                )}
+                                {part.answer_text && (
+                                  <div>
+                                    <p className="text-sm font-semibold text-indigo-500">
+                                      Student's Answer:
+                                    </p>
+                                    <div className="mt-1 text-base text-gray-900">
+                                      <KaTeXComponent
+                                        mathText={part.answer_text.replace(
+                                          /\\n/g,
+                                          "\n"
+                                        )}
+                                      />
+                                    </div>
+                                  </div>
+                                )}
+                                {part.correct_answer &&
+                                  part.correct_answer !== "null" &&
+                                  part.correct_answer !== null && (
+                                    <div>
+                                      <p className="text-sm font-semibold text-green-600">
+                                        Correct Answer:
+                                      </p>
+                                      <div className="mt-1 text-base text-gray-900">
+                                        <KaTeXComponent
+                                          mathText={part.correct_answer}
+                                        />
+                                      </div>
+                                    </div>
+                                  )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </Card>
+                    ))}
+                  {/* English */}
+                  {assignment?.subject?.toLowerCase() === "english" &&
+                    parsedResult && (
+                      <Card className="mb-6 p-6 rounded-lg shadow-sm">
+                        <div className="flex justify-between items-center mb-6">
+                          <h2 className="text-xl font-semibold text-indigo-700">
+                            Overall Marks
+                          </h2>
+                          <div className="text-lg font-bold text-blue-600">
+                            {parsedResult.submission_awarded_marks}/
+                            {parsedResult.submission_total_marks}
+                          </div>
+                        </div>
+                        {parsedResult.summary && (
+                          <div className="mb-6">
+                            <p className="text-sm font-semibold text-indigo-500">
+                              Summary:
+                            </p>
+                            <p className="mt-2 text-base text-gray-900">
+                              {parsedResult.summary}
+                            </p>
+                          </div>
+                        )}
+                        {parsedResult.detailed_feedback && (
+                          <div>
+                            <p className="text-sm font-semibold text-indigo-500">
+                              Detailed Feedback:
+                            </p>
+                            <div className="prose prose-indigo mt-2 text-gray-900 max-w-none leading-relaxed">
+                              <ReactMarkdown>
+                                {parsedResult.detailed_feedback}
+                              </ReactMarkdown>
+                            </div>
+                          </div>
+                        )}
+                      </Card>
+                    )}
+                    <div ref={streamEndRef} />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Instructions */}
         <Card className="mt-8 bg-gradient-to-r from-gray-50 to-slate-50">

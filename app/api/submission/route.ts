@@ -1,21 +1,22 @@
 import { HTTP_STATUS_CODES } from "@/lib/constants";
-import {
-  generateErrorResponse,
-  generateResultResponse,
-} from "@/lib/responseUtils";
+import { generateErrorResponse } from "@/lib/responseUtils";
 import { createServerSupabaseClient } from "@/services/supabase/server";
 import { randomUUID } from "crypto";
-import { sanitizeFileName } from "@/lib/helpers";
+import { ENGLISH_GRADING_PROMPT, MATHEMATICS_GRADING_PROMPT, sanitizeFileName } from "@/lib/helpers";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const geminiModel = genAI.getGenerativeModel({
+  model: "gemini-2.5-flash"
+});
 
 export async function POST(req: Request) {
   const supabase = createServerSupabaseClient();
+
   try {
     const formData = await req.formData();
-
     const assignmentId = formData.get("assignmentId") as string | null;
-    const studentIdentifier = formData.get("studentIdentifier") as
-      | string
-      | null;
+    const studentIdentifier = formData.get("studentIdentifier") as string | null;
     const answerFile = formData.get("answerFile") as File | null;
 
     if (!assignmentId || !studentIdentifier || !answerFile) {
@@ -25,7 +26,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Get uploaded answer key file
+    // Fetch assignment details
     const { data: assignmentData, error: assignmentFetchError } = await supabase
       .from("Assignment")
       .select(`answerKeyPath, subject`)
@@ -45,33 +46,11 @@ export async function POST(req: Request) {
       );
     }
 
-    const answerKeyPath = assignmentData?.answerKeyPath;
     const submissionType = assignmentData?.subject;
-
-    // Check for an existing submission from this student for this assignment
-    const { data: existingSubmission } = await supabase
-      .from("Submission")
-      .select("id")
-      .eq("assignmentId", assignmentId)
-      .eq("studentIdentifier", studentIdentifier)
-      .maybeSingle();
-
-    let submissionId: string;
-    let newSubmission = false;
-
-    if (existingSubmission) {
-      // If a submission exists, use its ID for the update
-      submissionId = existingSubmission.id;
-    } else {
-      // If no submission exists, generate a new ID and prepare to insert a new row
-      submissionId = randomUUID();
-      newSubmission = true;
-    }
-
     const safeFileName = sanitizeFileName(answerFile.name);
-
-    // Upload the file to Supabase Storage, using the same path for overwriting
     const filePath = `submissions/${assignmentId}/${studentIdentifier}/${safeFileName}`;
+
+    // Upload the file to Supabase Storage
     const { error: answerUploadError } = await supabase.storage
       .from("files")
       .upload(filePath, answerFile, { upsert: true });
@@ -83,65 +62,95 @@ export async function POST(req: Request) {
       );
     }
 
-    // Get the public URL for the uploaded file
     const { data: signedFile } = supabase.storage
       .from("files")
       .getPublicUrl(filePath);
 
     const submissionFileUrl = signedFile.publicUrl;
 
-    const submissionData = {
-      assignmentId,
-      studentIdentifier,
-      submissionFilePath: submissionFileUrl,
-      status: "pending",
-      scoreTotal: null,
-      summary: null,
-      gradedAt: new Date().toISOString(),
+    // Fetch and prepare the file for Gemini
+    const submissionResponse = await fetch(submissionFileUrl);
+    if (!submissionResponse.ok) {
+      throw new Error(`Failed to fetch submission file: ${submissionResponse.statusText}`);
+    }
+    const submissionBuffer = await submissionResponse.arrayBuffer();
+    const base64SubmissionFile = Buffer.from(submissionBuffer).toString('base64');
+    const submissionMimeType = submissionFileUrl.endsWith('.pdf') ? 'application/pdf' : 'image/jpeg';
+
+    const submissionPart = {
+      inlineData: {
+        data: base64SubmissionFile,
+        mimeType: submissionMimeType
+      }
     };
 
-    let result;
-    if (newSubmission) {
-      // Create a new submission record
-      const { data: insertData, error: insertError } = await supabase
-        .from("Submission")
-        .insert({ id: submissionId, ...submissionData })
-        .select()
-        .maybeSingle();
-
-      if (insertError) {
+    let gradingPrompt = '';
+    switch (submissionType) {
+      case 'mathematics':
+        gradingPrompt = MATHEMATICS_GRADING_PROMPT;
+        break;
+      case 'english':
+        gradingPrompt = ENGLISH_GRADING_PROMPT;
+        break;
+      default:
         return generateErrorResponse(
-          insertError.message,
-          HTTP_STATUS_CODES.HTTP_INTERNAL_SERVER_ERROR
+          'Invalid submissionType. Must be "mathematics" or "english".',
+          HTTP_STATUS_CODES.HTTP_BAD_REQUEST
         );
-      }
-      result = insertData;
-    } else {
-      // Update the existing submission record
-      const { data: updateData, error: updateError } = await supabase
-        .from("Submission")
-        .update(submissionData)
-        .eq("id", submissionId)
-        .select()
-        .maybeSingle();
-
-      if (updateError) {
-        return generateErrorResponse(
-          updateError.message,
-          HTTP_STATUS_CODES.HTTP_INTERNAL_SERVER_ERROR
-        );
-      }
-      result = updateData;
     }
 
-    // Trigger grading function
-    supabase.functions.invoke('grade-submission', {
-      body: { submissionId, submissionFileUrl, submissionType, ...(answerKeyPath ? { answerKeyUrl: answerKeyPath } : {}) },
+    // Generate a streaming response
+    const geminiStream = await geminiModel.generateContentStream({
+      contents: [{ role: 'user', parts: [{ text: gradingPrompt }, submissionPart] }]
     });
 
-    return generateResultResponse({
-      submission: result,
+    let fullResponse = '';
+    const stream = new ReadableStream({
+      async start(controller) {
+        for await (const chunk of geminiStream.stream) {
+          const textChunk = chunk.text();
+          fullResponse += textChunk;
+          controller.enqueue(textChunk);
+        }
+
+        // After the stream is complete, update the database
+        const submissionId = randomUUID(); // Generate a new ID for the new entry
+        let rawJsonText = fullResponse.replace(/```json\n?/, '').replace(/\n?```/, '');
+        let gradingResult;
+        try {
+          gradingResult = JSON.parse(rawJsonText);
+        } catch (parseError) {
+          console.error('Failed to parse Gemini JSON:', parseError);
+          throw new Error(`Invalid JSON from Gemini: ${rawJsonText}`);
+        }
+
+        const submissionData = {
+          assignmentId,
+          studentIdentifier,
+          submissionFilePath: submissionFileUrl,
+          status: "graded",
+          results: gradingResult,
+          gradedAt: new Date().toISOString(),
+        };
+
+        const { error: insertError } = await supabase
+          .from("Submission")
+          .insert({ id: submissionId, ...submissionData });
+
+        if (insertError) {
+          console.error('Supabase insert failed:', insertError.message);
+        }
+
+        controller.close();
+      },
     });
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/plain",
+      },
+    });
+
   } catch (err: any) {
     return generateErrorResponse(
       err.message || "Internal Server Error",
