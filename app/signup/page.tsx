@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ROLE } from "@/lib/helpers";
+import { emailRegex, ROLE } from "@/lib/helpers";
 import { PostFetcher } from "@/lib/helpers";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,6 +53,11 @@ export default function SignupPage() {
       !formData.confirmPassword
     ) {
       setError("All fields are required.");
+      return;
+    }
+
+    if (!emailRegex?.test(formData.email)) {
+      setError("Please enter a valid email address");
       return;
     }
 

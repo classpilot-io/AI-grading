@@ -16,6 +16,10 @@ import {
   Calendar,
   MoreVertical,
   Trash2,
+  BarChart2,
+  Edit,
+  LinkIcon,
+  Trash,
 } from "lucide-react";
 import { AssignmentModal } from "@/components/assignment-modal";
 import { Badge } from "@/components/ui/badge";
@@ -310,18 +314,35 @@ export default function AssignmentsPage() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-44">
                     <DropdownMenuItem onClick={() => openEditModal(assignment)}>
-                      ✏️ Edit Assignment
+                      <Edit className="h-4 w-4 mr-2" /> Edit Assignment
                     </DropdownMenuItem>
+
                     <Link
                       href={`/teacher/assignments/${assignment.id}/dashboard`}
                     >
-                      <DropdownMenuItem>📊 View Dashboard</DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <BarChart2 className="h-4 w-4 mr-2" /> View Dashboard
+                      </DropdownMenuItem>
                     </Link>
+
+                    <DropdownMenuItem
+                      onClick={() => {
+                        const link = `${process.env.NEXT_PUBLIC_BASE_URL}/submit/${assignment.id}`;
+                        navigator.clipboard.writeText(link);
+                        toast.success(
+                          `Submission link copied for "${assignment.name}".`
+                        );
+                      }}
+                    >
+                      <LinkIcon className="h-4 w-4 mr-2" /> Copy Link
+                    </DropdownMenuItem>
+
                     <DropdownMenuItem
                       className="text-red-600"
                       onClick={() => openDeleteModal(assignment)}
                     >
-                      🗑️ Delete Assignment
+                      <Trash className="h-4 w-4 mr-2 bg-red" /> Delete
+                      Assignment
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

@@ -148,3 +148,6 @@ export const ENGLISH_GRADING_PROMPT = `
           "detailed_feedback": "..."
         }
       `;
+
+export const emailRegex =
+  /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/;
