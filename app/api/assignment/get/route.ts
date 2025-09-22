@@ -3,20 +3,10 @@ import {
   generateErrorResponse,
   generateResultResponse,
 } from "@/lib/responseUtils";
-import { requireRole } from "@/authUtils";
+import { createServerSupabaseClient } from "@/services/supabase/server";
 
 export async function GET(req: Request) {
-  const { user, supabase, error } = await requireRole(req, [
-    "teacher",
-    "student",
-  ]);
-
-  if (error || !user) {
-    return generateErrorResponse(
-      "Unauthorized",
-      HTTP_STATUS_CODES.HTTP_UNAUTHORIZED
-    );
-  }
+  const supabase = createServerSupabaseClient();
 
   try {
     const { searchParams } = new URL(req.url);
