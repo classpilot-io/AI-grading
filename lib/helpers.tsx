@@ -130,7 +130,7 @@ export const MATHEMATICS_GRADING_PROMPT = `
         
         All mathematical notations, including symbols, fractions, and equations, must be represented using LaTeX. Enclose inline math within '$' and display math within '$$' to ensure correct rendering via MathJax or KaTeX.
       `;
-
+ 
 export const ENGLISH_GRADING_PROMPT = `
         You are an AI-powered evaluation tool for English papers, providing professional analysis for a teacher's dashboard. Your goal is to deliver a direct, objective assessment of the student's writing.
         
