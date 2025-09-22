@@ -6,11 +6,13 @@ export function middleware(req: NextRequest) {
   const token = req.cookies.get(AUTH_COOKIE)?.value;
   const { pathname } = req.nextUrl;
 
-  // Public routes (accessible without login)
-  const publicPaths = ["/", "/login", "/signup"];
+  const publicPrefixes = ["/", "/login", "/signup", "/submit"];
 
-  if (publicPaths.includes(pathname)) {
-    if (token && (pathname === "/login" || pathname === "/signup" || "/")) {
+  const isPublic =
+    publicPrefixes?.some((p) => pathname === p || pathname?.startsWith(`${p}/`));
+
+  if (isPublic) {
+    if (token && (pathname === "/login" || pathname === "/signup" || pathname === "/")) {
       return NextResponse.redirect(new URL("/teacher/assignments", req.url));
     }
     return NextResponse.next();
@@ -28,4 +30,3 @@ export const config = {
     "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|svg|ico|webp|avif|css|js|woff2?|ttf|eot)).*)",
   ],
 };
-
