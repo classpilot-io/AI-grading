@@ -8,7 +8,7 @@ import 'katex/dist/katex.min.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'AskAndLearn - AI-Powered Assignment Management',
+  title: 'Classpilot - AI-Powered Assignment Management',
   description: 'Streamline assignment creation, submission, and auto-grading',
 };
 

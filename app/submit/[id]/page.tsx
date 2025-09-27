@@ -263,7 +263,7 @@ export default function StudentSubmissionPage() {
             </div>
             <div>
               <Link href={"/"}>
-                <h1 className="text-xl font-bold text-gray-900">AskAndLearn</h1>
+                <h1 className="text-xl font-bold text-gray-900">Classpilot</h1>
               </Link>
               <p className="text-sm text-gray-500">Student Submission Portal</p>
             </div>

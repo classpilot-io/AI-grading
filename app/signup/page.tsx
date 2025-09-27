@@ -90,7 +90,7 @@ export default function SignupPage() {
       <Card className="w-full max-w-md shadow-xl border-0 bg-white/90 backdrop-blur-sm rounded-2xl">
         <CardHeader>
           <CardTitle className="text-xl sm:text-3xl font-bold text-center text-gray-900 relative">
-            Welcome to AskAndLearn
+            Welcome to Classpilot
             <span className="block w-16 h-1 bg-indigo-500 mx-auto mt-2 rounded-full"></span>
           </CardTitle>
           <CardDescription className="text-center text-gray-600 mt-2">
